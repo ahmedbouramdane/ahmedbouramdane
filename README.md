@@ -1,5 +1,4 @@
- ```markdown
-<div align="center">
+ <div align="center">
 
 <img src="https://capsule-render.vercel.app/api?type=venom&height=350&color=gradient&customColorList=0,2,2,5,30&text=AHMED%20BOURAMDANE&fontColor=fff&fontSize=80&desc=Full%20Stack%20Architect%20%7C%20AI%20Engineer%20%7C%20Open%20Source%20Contributor&descSize=22&descAlignY=75&animation=twinkling" width="100%"/>
 
@@ -344,4 +343,3 @@ export default AHMED_BOURAMDANE;
 </p>
 
 </div>
-```

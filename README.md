@@ -1,3 +1,234 @@
+<div align="center">
+
+<!-- 3D ANIMATED HEADER WITH GLOW -->
+<img src="https://capsule-render.vercel.app/api?type=shark&color=gradient&customColorList=24&height=250&section=header&text=Ahmed%20BOURAMDANE&fontSize=70&fontAlignY=35&animation=fadeIn&desc=⚡%20Computer%20Science%20Student%20|%20Lydex%20de%20Rabat%20⚡&descAlignY=60&descAlign=50&stroke=00FFE0&strokeWidth=2&glow=true" width="100%"/>
+
+<!-- 3D TYPING EFFECT WITH NEON -->
+<a href="https://git.io/typing-svg">
+  <img src="https://readme-typing-svg.demolab.com?font=Orbitron&weight=700&size=28&duration=2000&pause=800&color=00FFE0&center=true&vCenter=true&width=900&lines=Welcome+to+the+3D+Digital+Universe+%F0%9F%8C%90;Building+the+Future+with+Code+%F0%9F%92%BB;Full-Stack+%7C+AI+%7C+Quantum+Innovation;Lydex+de+Rabat+%F0%9F%8E%93;Let's+Create+Something+Epic+%F0%9F%9A%80" alt="Typing 3D SVG" />
+</a>
+
+<!-- 3D COUNTER & SOCIAL BADGES WITH FLOATING EFFECT -->
+<p>
+  <img src="https://komarev.com/ghpvc/?username=ahmedbouramdane&label=⚡+3D+VIEWS+⚡&color=00ffe0&style=for-the-badge&base=1000" alt="3D Views" />
+</p>
+
+<p>
+  <a href="https://github.com/ahmedbouramdane">
+    <img src="https://img.shields.io/badge/GitHub-3D%20WORLD-000?style=for-the-badge&logo=github&logoColor=00ffe0&labelColor=0a0a0a&color=00ffe0" alt="GitHub 3D"/>
+  </a>
+  <a href="https://linkedin.com/in/ahmedbouramdane">
+    <img src="https://img.shields.io/badge/LinkedIn-3D%20NETWORK-0077B5?style=for-the-badge&logo=linkedin&logoColor=white&labelColor=0a0a0a&color=00a0ff" alt="LinkedIn 3D"/>
+  </a>
+  <a href="mailto:ahmed.bouramdane@email.com">
+    <img src="https://img.shields.io/badge/Email-3D%20HOLOGRAM-D14836?style=for-the-badge&logo=gmail&logoColor=white&labelColor=0a0a0a&color=ff3860" alt="Email 3D"/>
+  </a>
+</p>
+
+<!-- 3D HOLOGRAPHIC DIVIDER -->
+<img src="https://user-images.githubusercontent.com/73097560/115834477-dbab4500-a447-11eb-908a-139a6edaec5c.gif" width="100%">
+
+</div>
+
+<!-- ===== 3D CONTRIBUTION GALLERY ===== -->
+<div align="center">
+  <h2>
+    <img src="https://media.giphy.com/media/l4FGI8GoTL7N4DsyI/giphy.gif" width="40" height="40"/>
+    🌍 3D CONTRIBUTION UNIVERSE 🌍
+    <img src="https://media.giphy.com/media/l4FGI8GoTL7N4DsyI/giphy.gif" width="40" height="40"/>
+  </h2>
+
+  <!-- 3D ISOMETRIC CONTRIBUTION CALENDAR (METRICS) -->
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/ahmedbouramdane/ahmedbouramdane/main/metrics.isometric.svg">
+    <img src="https://raw.githubusercontent.com/ahmedbouramdane/ahmedbouramdane/main/metrics.isometric.svg" width="80%" alt="3D Isometric Contributions"/>
+  </picture>
+
+  <!-- 3D GREEN CUBE CONTRIBUTION (PROFILE-3D-CONTRIB) -->
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/ahmedbouramdane/ahmedbouramdane/main/profile-3d-contrib/profile-night-rainbow.svg">
+    <img src="https://raw.githubusercontent.com/ahmedbouramdane/ahmedbouramdane/main/profile-3d-contrib/profile-night-rainbow.svg" width="80%" alt="3D Contribution Cube"/>
+  </picture>
+</div>
+
+<img src="https://user-images.githubusercontent.com/73097560/115834477-dbab4500-a447-11eb-908a-139a6edaec5c.gif" width="100%">
+
+<!-- ===== 3D TECH STACK ===== -->
+<div align="center">
+  <h2>
+    <img src="https://media.giphy.com/media/QssGEmpkyEOhBCb7e1/giphy.gif" width="40"/>
+    ⚡ 3D TECH STACK MATRIX ⚡
+    <img src="https://media.giphy.com/media/QssGEmpkyEOhBCb7e1/giphy.gif" width="40"/>
+  </h2>
+
+  <!-- 3D ROTATING BADGES WITH SHADOWS -->
+  <p>
+    <img src="https://img.shields.io/badge/Python-3D%20AI-3776AB?style=for-the-badge&logo=python&logoColor=white&labelColor=0a0a0a&color=3776AB&link=https://python.org" />
+    <img src="https://img.shields.io/badge/JavaScript-3D%20Web-F7DF1E?style=for-the-badge&logo=javascript&logoColor=black&labelColor=0a0a0a&color=F7DF1E" />
+    <img src="https://img.shields.io/badge/TypeScript-3D%20Types-007ACC?style=for-the-badge&logo=typescript&logoColor=white&labelColor=0a0a0a&color=007ACC" />
+    <img src="https://img.shields.io/badge/Java-3D%20JVM-ED8B00?style=for-the-badge&logo=java&logoColor=white&labelColor=0a0a0a&color=ED8B00" />
+    <img src="https://img.shields.io/badge/C++-3D%20Systems-00599C?style=for-the-badge&logo=c%2B%2B&logoColor=white&labelColor=0a0a0a&color=00599C" />
+    <img src="https://img.shields.io/badge/C-3D%20Core-00599C?style=for-the-badge&logo=c&logoColor=white&labelColor=0a0a0a&color=00599C" />
+  </p>
+
+  <!-- 3D SKILL ICONS WITH FLIP EFFECT -->
+  <p>
+    <a href="https://reactjs.org/">
+      <img src="https://img.shields.io/badge/React-3D%20UI-20232A?style=for-the-badge&logo=react&logoColor=61DAFB&labelColor=0a0a0a&color=61DAFB" />
+    </a>
+    <a href="https://nextjs.org/">
+      <img src="https://img.shields.io/badge/Next.js-3D%20SSR-000000?style=for-the-badge&logo=next.js&logoColor=white&labelColor=0a0a0a&color=000000" />
+    </a>
+    <a href="https://vuejs.org/">
+      <img src="https://img.shields.io/badge/Vue.js-3D%20Reactive-4FC08D?style=for-the-badge&logo=vue.js&logoColor=white&labelColor=0a0a0a&color=4FC08D" />
+    </a>
+    <a href="https://tailwindcss.com/">
+      <img src="https://img.shields.io/badge/Tailwind-3D%20CSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white&labelColor=0a0a0a&color=38B2AC" />
+    </a>
+  </p>
+
+  <!-- 3D BACKEND & DB -->
+  <p>
+    <img src="https://img.shields.io/badge/Node.js-3D%20Runtime-43853D?style=for-the-badge&logo=node.js&logoColor=white&labelColor=0a0a0a&color=43853D" />
+    <img src="https://img.shields.io/badge/Express-3D%20API-404D59?style=for-the-badge&logo=express&logoColor=white&labelColor=0a0a0a&color=404D59" />
+    <img src="https://img.shields.io/badge/Django-3D%20Framework-092E20?style=for-the-badge&logo=django&logoColor=white&labelColor=0a0a0a&color=092E20" />
+    <img src="https://img.shields.io/badge/MongoDB-3D%20NoSQL-4EA94B?style=for-the-badge&logo=mongodb&logoColor=white&labelColor=0a0a0a&color=4EA94B" />
+    <img src="https://img.shields.io/badge/PostgreSQL-3D%20SQL-316192?style=for-the-badge&logo=postgresql&logoColor=white&labelColor=0a0a0a&color=316192" />
+  </p>
+
+  <!-- 3D TOOLS -->
+  <p>
+    <img src="https://img.shields.io/badge/Docker-3D%20Containers-2496ED?style=for-the-badge&logo=docker&logoColor=white&labelColor=0a0a0a&color=2496ED" />
+    <img src="https://img.shields.io/badge/Git-3D%20Versioning-F05032?style=for-the-badge&logo=git&logoColor=white&labelColor=0a0a0a&color=F05032" />
+    <img src="https://img.shields.io/badge/Linux-3D%20Kernel-FCC624?style=for-the-badge&logo=linux&logoColor=black&labelColor=0a0a0a&color=FCC624" />
+    <img src="https://img.shields.io/badge/Figma-3D%20Design-F24E1E?style=for-the-badge&logo=figma&logoColor=white&labelColor=0a0a0a&color=F24E1E" />
+  </p>
+</div>
+
+<img src="https://user-images.githubusercontent.com/73097560/115834477-dbab4500-a447-11eb-908a-139a6edaec5c.gif" width="100%">
+
+<!-- ===== 3D GITHUB STATS HOLOGRAM ===== -->
+<div align="center">
+  <h2>
+    <img src="https://media.giphy.com/media/cj87CxfRtrUifF3Ryk/giphy.gif" width="40"/>
+    📊 3D STATISTICS MATRIX 📊
+    <img src="https://media.giphy.com/media/cj87CxfRtrUifF3Ryk/giphy.gif" width="40"/>
+  </h2>
+
+  <!-- 3D STAT CARDS WITH GLOW -->
+  <img src="https://github-readme-stats.vercel.app/api?username=ahmedbouramdane&show_icons=true&theme=tokyonight&hide_border=true&bg_color=0D1117&title_color=00FFE0&icon_color=00FFE0&text_color=FFFFFF&ring_color=00FFE0&include_all_commits=true&count_private=true" height="180em" />
+  <img src="https://github-readme-stats.vercel.app/api/top-langs/?username=ahmedbouramdane&layout=3d&theme=tokyonight&hide_border=true&bg_color=0D1117&title_color=00FFE0&text_color=FFFFFF&langs_count=10" height="180em" />
+
+  <!-- 3D STREAK STATS WITH FIRE -->
+  <img src="https://github-readme-streak-stats.herokuapp.com/?user=ahmedbouramdane&theme=tokyonight&hide_border=true&background=0D1117&stroke=00FFE0&ring=00FFE0&fire=FF6B6B&currStreakLabel=00FFE0&sideNums=00FFE0" width="100%" />
+
+  <!-- 3D ACTIVITY GRAPH (INTERACTIVE) -->
+  <img src="https://github-readme-activity-graph.vercel.app/graph?username=ahmedbouramdane&theme=tokyo-night&hide_border=true&bg_color=0D1117&color=00FFE0&line=00FFE0&point=FFFFFF&area=true&area_color=00FFE0" width="100%" />
+
+  <!-- 3D TROPHY ROOM -->
+  <h3>🏆 3D TROPHY COLLECTION 🏆</h3>
+  <img src="https://github-profile-trophy.vercel.app/?username=ahmedbouramdane&theme=tokyonight&no-frame=true&no-bg=true&margin-w=15&margin-h=15&column=6&rank=SECRET,SSS,SS,S,AAA,AA,A,B" alt="3D Trophies" />
+</div>
+
+<img src="https://user-images.githubusercontent.com/73097560/115834477-dbab4500-a447-11eb-908a-139a6edaec5c.gif" width="100%">
+
+<!-- ===== 3D FEATURED PROJECTS ===== -->
+<div align="center">
+  <h2>
+    <img src="https://media.giphy.com/media/3oKIPnAiaMCws8nOsE/giphy.gif" width="40"/>
+    🚀 3D PROJECT PORTAL 🚀
+    <img src="https://media.giphy.com/media/3oKIPnAiaMCws8nOsE/giphy.gif" width="40"/>
+  </h2>
+
+  <!-- 3D PROJECT CARDS WITH PARALLAX -->
+  <table>
+    <tr>
+      <td>
+        <a href="https://github.com/ahmedbouramdane/project1">
+          <img src="https://github-readme-stats.vercel.app/api/pin/?username=ahmedbouramdane&repo=project1&theme=tokyonight&hide_border=true&bg_color=0D1117&title_color=00FFE0&icon_color=00FFE0&text_color=FFFFFF&show_owner=true" />
+        </a>
+      </td>
+      <td>
+        <a href="https://github.com/ahmedbouramdane/project2">
+          <img src="https://github-readme-stats.vercel.app/api/pin/?username=ahmedbouramdane&repo=project2&theme=tokyonight&hide_border=true&bg_color=0D1117&title_color=00FFE0&icon_color=00FFE0&text_color=FFFFFF&show_owner=true" />
+        </a>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <a href="https://github.com/ahmedbouramdane/project3">
+          <img src="https://github-readme-stats.vercel.app/api/pin/?username=ahmedbouramdane&repo=project3&theme=tokyonight&hide_border=true&bg_color=0D1117&title_color=00FFE0&icon_color=00FFE0&text_color=FFFFFF&show_owner=true" />
+        </a>
+      </td>
+      <td>
+        <a href="https://github.com/ahmedbouramdane/project4">
+          <img src="https://github-readme-stats.vercel.app/api/pin/?username=ahmedbouramdane&repo=project4&theme=tokyonight&hide_border=true&bg_color=0D1117&title_color=00FFE0&icon_color=00FFE0&text_color=FFFFFF&show_owner=true" />
+        </a>
+      </td>
+    </tr>
+  </table>
+</div>
+
+<img src="https://user-images.githubusercontent.com/73097560/115834477-dbab4500-a447-11eb-908a-139a6edaec5c.gif" width="100%">
+
+<!-- ===== 3D SNAKE ANIMATION ===== -->
+<div align="center">
+  <h2>
+    <img src="https://media.giphy.com/media/26FPCXdkvDbKBbgkI/giphy.gif" width="40"/>
+    🐍 3D CONTRIBUTION SNAKE 🐍
+    <img src="https://media.giphy.com/media/26FPCXdkvDbKBbgkI/giphy.gif" width="40"/>
+  </h2>
+
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/ahmedbouramdane/ahmedbouramdane/output/github-contribution-grid-snake-dark.svg">
+    <img src="https://raw.githubusercontent.com/ahmedbouramdane/ahmedbouramdane/output/github-contribution-grid-snake.svg" width="100%" alt="3D Snake"/>
+  </picture>
+</div>
+
+<img src="https://user-images.githubusercontent.com/73097560/115834477-dbab4500-a447-11eb-908a-139a6edaec5c.gif" width="100%">
+
+<!-- ===== 3D QUOTE & SUPPORT ===== -->
+<div align="center">
+  <h2>
+    <img src="https://media.giphy.com/media/xT9IgzoKnwFNmISR8I/giphy.gif" width="40"/>
+    💡 3D WISDOM CUBE 💡
+    <img src="https://media.giphy.com/media/xT9IgzoKnwFNmISR8I/giphy.gif" width="40"/>
+  </h2>
+
+  <img src="https://quotes-github-readme.vercel.app/api?type=3d&theme=tokyonight&animation=grow_out_in" width="80%" alt="3D Quote"/>
+
+  <h2>🤝 3D CONNECT HOLOGRAM 🤝</h2>
+  <p>
+    <a href="https://twitter.com/ahmedbouramdane">
+      <img src="https://img.shields.io/badge/Twitter-3D%20Tweets-1DA1F2?style=for-the-badge&logo=twitter&logoColor=white&labelColor=0a0a0a&color=1DA1F2" />
+    </a>
+    <a href="https://discord.com/users/YOUR_DISCORD_ID">
+      <img src="https://img.shields.io/badge/Discord-3D%20Chat-5865F2?style=for-the-badge&logo=discord&logoColor=white&labelColor=0a0a0a&color=5865F2" />
+    </a>
+    <a href="https://dev.to/ahmedbouramdane">
+      <img src="https://img.shields.io/badge/dev.to-3D%20Blog-0A0A0A?style=for-the-badge&logo=dev.to&logoColor=white&labelColor=0a0a0a&color=0A0A0A" />
+    </a>
+  </p>
+
+  <!-- 3D SUPPORT BUTTON -->
+  <a href="https://www.buymeacoffee.com/ahmedbouramdane">
+    <img src="https://img.shields.io/badge/Buy%20Me%20a%203D%20Coffee-ffdd00?style=for-the-badge&logo=buy-me-a-coffee&logoColor=black&labelColor=0a0a0a&color=ffdd00" />
+  </a>
+
+  <p>
+    <img src="https://profile-counter.glitch.me/ahmedbouramdane/count.svg" alt="3D Visitor Counter" />
+  </p>
+</div>
+
+<img src="https://capsule-render.vercel.app/api?type=soft&color=gradient&height=150&section=footer&text=✨%20Enter%20the%203rd%20Dimension%20with%20Ahmed%20✨&fontSize=30&fontAlignY=70&animation=twinkling" width="100%"/>
+
+<div align="center">
+  <img src="https://media.giphy.com/media/jpVnCwD2lL6JNZhO9w/giphy.gif" width="80"/>
+  <h3>⭐️ From [Ahmed BOURAMDANE] with 3D ⭐️</h3>
+</div>
+
+ <hr/>
+ 
  <div align="center">
 
 <img src="https://capsule-render.vercel.app/api?type=venom&height=350&color=gradient&customColorList=0,2,2,5,30&text=AHMED%20BOURAMDANE&fontColor=fff&fontSize=80&desc=Full%20Stack%20Architect%20%7C%20AI%20Engineer%20%7C%20Open%20Source%20Contributor&descSize=22&descAlignY=75&animation=twinkling" width="100%"/>

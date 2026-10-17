@@ -1,34 +1,39 @@
 <div align="center">
 
-<!-- ============ ANIMATED HERO BANNER ============ -->
-
-<img src="https://capsule-render.vercel.app/api?type=shark&color=gradient&customColorList=24&height=280&section=header&text=Ahmed%20BOURAMDANE&fontSize=66&fontAlignY=38&animation=fadeIn&desc=Full-Stack%20Developer%20%7C%20AI%20%26%20Data%20Analysis%20%7C%20Godot%20Game%20Dev&descAlignY=64&descAlign=50&descSize=22&stroke=00FFE0&strokeWidth=2&glow=true" width="100%" alt="Ahmed BOURAMDANE"/>
-
 <!-- ============ TYPING ANIMATION ============ -->
 
 <img src="https://readme-typing-svg.demolab.com?font=JetBrains+Mono&weight=700&size=26&duration=2300&pause=650&color=00FFE0&center=true&vCenter=true&width=980&lines=Full-Stack+Developer+%26+Web+Engineer;Backend+%7C+FastAPI+%C2%B7+Laravel+%C2%B7+Flask+%C2%B7+Django+%C2%B7+Express;Frontend+%7C+Next.js+%C2%B7+React+%C2%B7+Tailwind+%C2%B7+Bootstrap+%C2%B7+Sass;AI+%C2%B7+Data+Analysis+%C2%B7+RAG+%26+Fine-Tuning;Game+Dev+with+Godot+%F0%9F%8E%AE;Let's+build+something+epic+%F0%9F%9A%80" alt="Typing SVG" />
 
-<!-- ============ STATUS BADGES ============ -->
+<!-- ============ PERSONAL IDENTITY CARD ============ -->
 
-<p>
+<p align="center">
+  <img src="./public/identity-card.png" width="100%" alt="Ahmed Bouramdane, computer science student at Lydex de Rabat in Rabat, Morocco. Born in 2008, focused on web development, AI and data, and game development. Open to work."/>
+</p>
+
+<!-- ============ PROFILE ============ -->
+
+<p align="center">
+  <strong>PROFILE</strong><br/>
   <img src="https://img.shields.io/badge/Status-Open%20to%20Work-0D1117?style=for-the-badge&labelColor=00FF41&logo=zap&logoColor=00FF41" alt="Status"/>
   <img src="https://img.shields.io/badge/Focus-Full%20Stack%20%26%20AI-0D1117?style=for-the-badge&labelColor=00FFE0&logo=target&logoColor=00FFE0" alt="Focus"/>
   <img src="https://img.shields.io/badge/Location-Rabat%2C%20Morocco%20%F0%9F%87%B2%F0%9F%87%A7-0D1117?style=for-the-badge&labelColor=A855F7&logo=mapbox&logoColor=A855F7" alt="Location"/>
   <img src="https://api.visitorbadge.io/api/visitors?path=ahmedbouramdane&label=Profile%20Views&countColor=%2300FFE0&style=for-the-badge&labelColor=%230D1117" alt="Profile views"/>
 </p>
 
-<!-- ============ SOCIAL LINKS ============ -->
+<!-- ============ CONNECT ============ -->
 
-<p>
+<p align="center">
+  <strong>CONNECT</strong><br/>
   <a href="https://github.com/ahmedbouramdane"><img src="https://img.shields.io/badge/GitHub-@ahmedbouramdane-0D1117?style=for-the-badge&labelColor=00FFE0&logo=github&logoColor=00FFE0" alt="GitHub"/></a>
   <a href="https://linkedin.com/in/ahmedbouramdane"><img src="https://img.shields.io/badge/LinkedIn-Connect-0D1117?style=for-the-badge&labelColor=0A66C2" alt="LinkedIn"/></a>
   <a href="mailto:ahmed.bouramdane@email.com"><img src="https://img.shields.io/badge/Email-Say%20Hello-0D1117?style=for-the-badge&labelColor=EA4335&logo=gmail&logoColor=white" alt="Email"/></a>
 </p>
 
-<!-- ============ SECTION NAV ============ -->
+<!-- ============ EXPLORE ============ -->
 
-<p>
-  <a href="#-about-me"><img src="https://img.shields.io/badge/About_Me-%E2%86%93-0D1117?style=for-the-badge&labelColor=00FFE0" alt="About"/></a>
+<p align="center">
+  <strong>EXPLORE</strong><br/>
+  <a href="#about-me"><img src="https://img.shields.io/badge/About_Me-%E2%86%93-0D1117?style=for-the-badge&labelColor=00FFE0" alt="About"/></a>
   <a href="#-tech-stack"><img src="https://img.shields.io/badge/Tech_Stack-%E2%86%93-0D1117?style=for-the-badge&labelColor=A855F7" alt="Tech Stack"/></a>
   <a href="#-github-analytics"><img src="https://img.shields.io/badge/Analytics-%E2%86%93-0D1117?style=for-the-badge&labelColor=22D3EE" alt="Analytics"/></a>
   <a href="#-featured-projects"><img src="https://img.shields.io/badge/Projects-%E2%86%93-0D1117?style=for-the-badge&labelColor=34D399" alt="Projects"/></a>
@@ -42,46 +47,22 @@
 
 </div>
 
-## 🧠 About Me
+## About Me
 
 <table>
   <tr>
     <td width="62%" valign="top">
 
-I'm **Ahmed Bouramdane** — a computer science student at **Lydex de Rabat** 🇲🇦 who builds complete products end-to-end: from the database schema and the API, all the way to a polished, animated interface.
+I'm **Ahmed Bouramdane**, a computer science enthusiast and a student at **Lydex de Rabat**. I enjoy building useful software end to end, from well-designed APIs and data workflows to polished web experiences.
 
-I care about **clean architecture**, **performance** and **developer experience** — and I like turning messy data or fuzzy ideas into shipped, working software.
+I value **clear architecture**, **performance**, and **developer experience**. My goal is to turn complex problems and early ideas into reliable, shippable products.
 
-- 🧩 **Full-Stack** — backend services, REST APIs and pixel-perfect frontends
-- 🤖 **AI & Data Analysis** — modelling, visualisation and insight extraction with Python
-- 🔎 **RAG & Fine-Tuning** — retrieval-augmented generation and adapting models to real data
-- 🎮 **Game Dev** — prototyping interactive worlds with **Godot**
-- 📦 **DevOps & Delivery** — Docker, Kubernetes, CI/CD and disciplined project management
+- **Full-stack development** — backend services, REST APIs, and responsive frontends
+- **AI & data** — analysis, visualisation, RAG, and model fine-tuning
+- **Game development** — interactive prototypes with **Godot**
+- **Delivery** — Docker, Kubernetes, and CI/CD
 
-</td>
-<td width="38%" valign="top">
-
-<h3>📟 Quick Facts</h3>
-
-<p>
-  <b>🎓 Education</b><br/>Computer Science — Lydex de Rabat<br/><br/>
-  <b>📍 Location</b><br/>Rabat, Morocco · UTC+1<br/><br/>
-  <b>⚙️ Stack</b><br/>Full-Stack · AI · Data · Games<br/><br/>
-  <b>🚀 Availability</b><br/>Internships · Freelance · Collaboration<br/><br/>
-  <b>⏱️ Response time</b><br/>&lt; 24 hours
-</p>
-
-</td>
-  </tr>
-</table>
-
-```diff
-+ 🎯 MISSION : Turn complex problems into elegant, shippable products
-+ 🎓 SCHOOL  : Lydex de Rabat — Computer Science Department
-+ 🌍 BASE    : Rabat, Morocco (UTC+1)
-+ ⚡ STATUS   : Available for internships, freelance & collaborations
-+ 🔭 FOCUS    : Full-Stack · AI / RAG · Game Dev
-```
+> **What I aim for:** turning complex problems into elegant, reliable software.
 
 <div align="center">
   <img src="https://user-images.githubusercontent.com/73097560/115834477-dbab4500-a447-11eb-908a-139a6edaec5c.gif" width="100%" alt="divider"/>

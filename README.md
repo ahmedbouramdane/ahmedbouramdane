@@ -7,26 +7,43 @@
 <!-- ============ PERSONAL IDENTITY CARD ============ -->
 
 <p align="center">
-  <img src="./public/identity-card.png" width="100%" alt="Ahmed Bouramdane, computer science student at Lydex de Rabat in Rabat, Morocco. Born in 2008, focused on web development, AI and data, and game development. Open to work."/>
+  <img src="./public/identity-card.png" width="100%" alt="Ahmed Bouramdane, computer science student at Lydex de Rabat. Locations: Rabat, Morocco and Boudenib, Morocco. Open to work. Focus areas: full-stack development, AI and data, mobile development, game development, cybersecurity, and DevOps."/>
 </p>
 
 <!-- ============ PROFILE ============ -->
 
 <p align="center">
   <strong>PROFILE</strong><br/>
-  <img src="https://img.shields.io/badge/Status-Open%20to%20Work-0D1117?style=for-the-badge&labelColor=00FF41&logo=zap&logoColor=00FF41" alt="Status"/>
-  <img src="https://img.shields.io/badge/Focus-Full%20Stack%20%26%20AI-0D1117?style=for-the-badge&labelColor=00FFE0&logo=target&logoColor=00FFE0" alt="Focus"/>
-  <img src="https://img.shields.io/badge/Location-Rabat%2C%20Morocco%20%F0%9F%87%B2%F0%9F%87%A7-0D1117?style=for-the-badge&labelColor=A855F7&logo=mapbox&logoColor=A855F7" alt="Location"/>
-  <img src="https://api.visitorbadge.io/api/visitors?path=ahmedbouramdane&label=Profile%20Views&countColor=%2300FFE0&style=for-the-badge&labelColor=%230D1117" alt="Profile views"/>
+</p>
+
+<table align="center">
+  <tr>
+    <td align="center">
+      <strong>AVAILABILITY</strong><br/>
+      <img src="https://img.shields.io/badge/Open%20to%20Work-0D1117?style=for-the-badge&logo=freelancer&logoColor=00FF41" alt="Open to work"/>
+    </td>
+    <td align="center">
+      <strong>FOCUS</strong><br/>
+      <img src="https://img.shields.io/badge/Full--Stack%20%26%20AI-0D1117?style=for-the-badge&logo=visualstudiocode&logoColor=00FFE0" alt="Full-stack development and AI"/>
+    </td>
+    <td align="center">
+      <strong>LOCATION</strong><br/>
+      <img src="https://img.shields.io/badge/Rabat%2C%20Morocco-0D1117?style=for-the-badge&logo=googlemaps&logoColor=A855F7" alt="Rabat, Morocco"/>
+    </td>
+  </tr>
+</table>
+
+<p align="center">
+  <img src="https://api.visitorbadge.io/api/visitors?path=ahmedbouramdane&label=Profile%20Views&countColor=%2300FFE0&style=flat&labelColor=%230D1117" alt="Profile views"/>
 </p>
 
 <!-- ============ CONNECT ============ -->
 
 <p align="center">
   <strong>CONNECT</strong><br/>
-  <a href="https://github.com/ahmedbouramdane"><img src="https://img.shields.io/badge/GitHub-@ahmedbouramdane-0D1117?style=for-the-badge&labelColor=00FFE0&logo=github&logoColor=00FFE0" alt="GitHub"/></a>
-  <a href="https://linkedin.com/in/ahmedbouramdane"><img src="https://img.shields.io/badge/LinkedIn-Connect-0D1117?style=for-the-badge&labelColor=0A66C2" alt="LinkedIn"/></a>
-  <a href="mailto:ahmed.bouramdane@email.com"><img src="https://img.shields.io/badge/Email-Say%20Hello-0D1117?style=for-the-badge&labelColor=EA4335&logo=gmail&logoColor=white" alt="Email"/></a>
+  <a href="https://github.com/ahmedbouramdane"><img src="https://img.shields.io/badge/GitHub-Profile-0D1117?style=flat&logo=github&logoColor=00FFE0" alt="GitHub profile"/></a>
+  <a href="https://linkedin.com/in/ahmedbouramdane"><img src="https://img.shields.io/badge/LinkedIn-Connect-0D1117?style=flat&logo=linkedin&logoColor=0A66C2" alt="Connect on LinkedIn"/></a>
+  <a href="https://instagram.com/ahmedbouramdane77"><img src="https://img.shields.io/badge/Instagram-Follow-0D1117?style=flat&logo=instagram&logoColor=E4405F" alt="Follow on Instagram"/></a>
 </p>
 
 <!-- ============ EXPLORE ============ -->
@@ -49,20 +66,45 @@
 
 ## About Me
 
+<p align="center">
+  <strong>Computer science student</strong><br/>
+  Building practical software across web, mobile, AI, and interactive projects.
+</p>
+
 <table>
   <tr>
-    <td width="62%" valign="top">
+    <td width="33%" valign="top">
+      <strong>FULL-STACK DEVELOPMENT</strong><br/><br/>
+      Creating complete products, from backend services and APIs to thoughtful web interfaces.
+    </td>
+    <td width="33%" valign="top">
+      <strong>AI &amp; DATA</strong><br/><br/>
+      Exploring data analysis, visualisation, retrieval-augmented generation, and fine-tuning.
+    </td>
+    <td width="33%" valign="top">
+      <strong>MOBILE DEVELOPMENT</strong><br/><br/>
+      Bringing useful, well-designed product experiences to mobile devices.
+    </td>
+  </tr>
+  <tr>
+    <td width="33%" valign="top">
+      <strong>GAME DEVELOPMENT</strong><br/><br/>
+      Prototyping interactive ideas and learning through projects with Godot.
+    </td>
+    <td width="33%" valign="top">
+      <strong>CYBERSECURITY</strong><br/><br/>
+      Building security awareness into the way I learn, design, and develop software.
+    </td>
+    <td width="33%" valign="top">
+      <strong>DEVOPS &amp; DELIVERY</strong><br/><br/>
+      Learning to package, automate, and deliver projects with Docker, Kubernetes, and CI/CD.
+    </td>
+  </tr>
+</table>
 
-I'm **Ahmed Bouramdane**, a computer science enthusiast and a student at **Lydex de Rabat**. I enjoy building useful software end to end, from well-designed APIs and data workflows to polished web experiences.
-
-I value **clear architecture**, **performance**, and **developer experience**. My goal is to turn complex problems and early ideas into reliable, shippable products.
-
-- **Full-stack development** — backend services, REST APIs, and responsive frontends
-- **AI & data** — analysis, visualisation, RAG, and model fine-tuning
-- **Game development** — interactive prototypes with **Godot**
-- **Delivery** — Docker, Kubernetes, and CI/CD
-
-> **What I aim for:** turning complex problems into elegant, reliable software.
+<blockquote>
+  I value clear architecture, performance, and a good developer experience. I like taking an idea from the first sketch to a useful, working product.
+</blockquote>
 
 <div align="center">
   <img src="https://user-images.githubusercontent.com/73097560/115834477-dbab4500-a447-11eb-908a-139a6edaec5c.gif" width="100%" alt="divider"/>
@@ -359,16 +401,17 @@ export default AHMED_BOURAMDANE;
 
 ## 🤝 Let's Connect
 
+Have an opportunity, project idea, or question? Choose a channel below — I'd be happy to hear from you.
+
 <p align="center">
-  <a href="https://github.com/ahmedbouramdane">
-    <img src="https://img.shields.io/badge/GitHub-Explore%20my%20code-0D1117?style=for-the-badge&labelColor=00FFE0&logo=github&logoColor=00FFE0" alt="GitHub"/>
-  </a>
-  <a href="https://linkedin.com/in/ahmedbouramdane">
-    <img src="https://img.shields.io/badge/LinkedIn-Let's%20talk%20work-0D1117?style=for-the-badge&labelColor=0A66C2" alt="LinkedIn"/>
-  </a>
-  <a href="mailto:ahmed.bouramdane@email.com">
-    <img src="https://img.shields.io/badge/Email-Drop%20me%20a%20line-0D1117?style=for-the-badge&labelColor=EA4335&logo=gmail&logoColor=white" alt="Email"/>
-  </a>
+  <a href="mailto:a.bouramdnae.se24@lydex-se.ma"><img src="https://img.shields.io/badge/Email-Say%20hello-0D1117?style=for-the-badge&logo=gmail&logoColor=EA4335" alt="Email Ahmed"/></a>
+  <a href="https://wa.me/212633977491"><img src="https://img.shields.io/badge/WhatsApp-Message%20me-0D1117?style=for-the-badge&logo=whatsapp&logoColor=25D366" alt="Message Ahmed on WhatsApp"/></a>
+  <a href="https://linkedin.com/in/ahmedbouramdane"><img src="https://img.shields.io/badge/LinkedIn-Let's%20connect-0D1117?style=for-the-badge&logo=linkedin&logoColor=0A66C2" alt="Connect with Ahmed on LinkedIn"/></a>
+</p>
+
+<p align="center">
+  <a href="https://github.com/ahmedbouramdane"><img src="https://img.shields.io/badge/GitHub-Explore%20my%20work-0D1117?style=for-the-badge&logo=github&logoColor=00FFE0" alt="Explore Ahmed's GitHub projects"/></a>
+  <a href="https://instagram.com/ahmedbouramdane77"><img src="https://img.shields.io/badge/Instagram-Follow%20along-0D1117?style=for-the-badge&logo=instagram&logoColor=E4405F" alt="Follow Ahmed on Instagram"/></a>
 </p>
 
 <p align="center">

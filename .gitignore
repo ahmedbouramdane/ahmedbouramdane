@@ -19,6 +19,9 @@
 
 # production
 /build
+/backend/data/
+/backend/.env
+*.sqlite3
 
 # misc
 .DS_Store

@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from "react";
 import Link from "next/link";
-import { ArrowDown, ArrowLeft, ArrowUp, Award, ChevronLeft, ChevronRight, FolderKanban, ImagePlus, Link2, LogOut, Mail, MailOpen, Pencil, Plus, RefreshCw, Save, ShieldCheck, Trash2, Upload, X } from "lucide-react";
+import { ArrowDown, ArrowLeft, ArrowUp, Award, ChevronLeft, ChevronRight, FolderKanban, ImagePlus, Link2, LogOut, Mail, MailOpen, Pencil, Plus, RefreshCw, Save, Search, ShieldCheck, Trash2, Upload, X } from "lucide-react";
 import ProjectImage from "../project-image";
 
 type AdminSession = { username: string };
@@ -222,6 +222,7 @@ export default function DashboardClient({ allowLocalUploads }: { allowLocalUploa
   const [offset, setOffset] = useState(0);
   const [filter, setFilter] = useState<MessageFilter>("all");
   const [search, setSearch] = useState("");
+  const [selectedMessageId, setSelectedMessageId] = useState<number | null>(null);
   const [notice, setNotice] = useState("");
   const [error, setError] = useState("");
 
@@ -363,6 +364,9 @@ export default function DashboardClient({ allowLocalUploads }: { allowLocalUploa
         .some((value) => value.toLocaleLowerCase().includes(query));
     });
   }, [filter, messages, search]);
+  const selectedMessage = visibleMessages.find((message) => message.id === selectedMessageId)
+    ?? visibleMessages[0]
+    ?? null;
 
   const handleLogin = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -761,12 +765,15 @@ export default function DashboardClient({ allowLocalUploads }: { allowLocalUploa
           <div className="dashboard-inbox-toolbar">
             <label className="dashboard-search">
               <span className="sr-only">Search messages on this page</span>
-              <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search this page…" />
+              <Search size={16} aria-hidden="true" />
+              <input type="search" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search name, subject, email…" />
+              {search && <button type="button" className="dashboard-search-clear" onClick={() => setSearch("")} aria-label="Clear message search"><X size={14} /></button>}
             </label>
             <div className="dashboard-filter-group" role="group" aria-label="Filter messages">
               {(["all", "unread", "read"] as const).map((value) => (
-                <button key={value} type="button" className={filter === value ? "selected" : ""} onClick={() => setFilter(value)}>
+                <button key={value} type="button" className={filter === value ? "selected" : ""} onClick={() => setFilter(value)} aria-pressed={filter === value}>
                   {value === "all" ? "All" : value === "unread" ? "Unread" : "Read"}
+                  <span>{value === "all" ? messages.length : value === "unread" ? unreadCount : messages.length - unreadCount}</span>
                 </button>
               ))}
             </div>
@@ -784,33 +791,50 @@ export default function DashboardClient({ allowLocalUploads }: { allowLocalUploa
               <span>{messages.length ? "Try another search or filter." : "New contact form submissions will appear here."}</span>
             </div>
           ) : (
-            <div className="dashboard-message-list">
-              {visibleMessages.map((message) => (
-                <article className={`dashboard-message${message.is_read ? " is-read" : " is-unread"}`} key={message.id}>
-                  <div className="dashboard-message-main">
-                    <span className={`dashboard-message-status${message.is_read ? "" : " unread"}`}>{message.is_read ? "READ" : "NEW"}</span>
-                    <div className="dashboard-message-heading">
-                      <h2>{message.subject}</h2>
-                      <time dateTime={message.created_at}>{messageDate(message.created_at)}</time>
-                    </div>
-                    <p className="dashboard-message-sender">
-                      <strong>{message.name}</strong><a href={`mailto:${encodeURIComponent(message.email)}`}>{message.email}</a>
-                    </p>
-                    <p className="dashboard-message-body">{message.message}</p>
-                    <div className="dashboard-message-actions">
-                      <a href={`mailto:${encodeURIComponent(message.email)}?subject=${encodeURIComponent(`Re: ${message.subject}`)}`}>
-                        <Mail size={14} /> Reply by email
-                      </a>
-                      <button type="button" onClick={() => void toggleRead(message)}>
-                        <MailOpen size={14} /> Mark as {message.is_read ? "unread" : "read"}
-                      </button>
-                      <button className="dashboard-delete" type="button" onClick={() => void deleteMessage(message)}>
-                        <Trash2 size={14} /> Delete
-                      </button>
-                    </div>
+            <div className="dashboard-message-browser">
+              <div className="dashboard-message-list" role="group" aria-label="Inbox messages">
+                {visibleMessages.map((message) => (
+                  <button
+                    className={`dashboard-message-row${message.is_read ? " is-read" : " is-unread"}${selectedMessage?.id === message.id ? " is-selected" : ""}`}
+                    key={message.id}
+                    type="button"
+                    aria-pressed={selectedMessage?.id === message.id}
+                    onClick={() => setSelectedMessageId(message.id)}
+                  >
+                    <span className={`dashboard-message-row-status${message.is_read ? "" : " unread"}`} aria-label={message.is_read ? "Read" : "Unread"} />
+                    <span className="dashboard-message-row-copy">
+                      <span className="dashboard-message-row-meta"><strong>{message.name}</strong><time dateTime={message.created_at}>{messageDate(message.created_at)}</time></span>
+                      <span className="dashboard-message-row-subject">{message.subject}</span>
+                      <span className="dashboard-message-row-preview">{message.message.replace(/\s+/g, " ")}</span>
+                    </span>
+                  </button>
+                ))}
+              </div>
+              {selectedMessage && (
+                <article className="dashboard-message-detail" key={selectedMessage.id} aria-label={`Message from ${selectedMessage.name}`}>
+                  <div className="dashboard-message-detail-top">
+                    <span className={`dashboard-message-status${selectedMessage.is_read ? "" : " unread"}`}>{selectedMessage.is_read ? "READ MESSAGE" : "NEW MESSAGE"}</span>
+                    <time dateTime={selectedMessage.created_at}>{messageDate(selectedMessage.created_at)}</time>
+                  </div>
+                  <h2>{selectedMessage.subject}</h2>
+                  <div className="dashboard-message-detail-sender">
+                    <span className="dashboard-message-avatar" aria-hidden="true">{selectedMessage.name.trim().charAt(0).toUpperCase()}</span>
+                    <span><strong>{selectedMessage.name}</strong><a href={`mailto:${encodeURIComponent(selectedMessage.email)}`}>{selectedMessage.email}</a></span>
+                  </div>
+                  <p className="dashboard-message-detail-body">{selectedMessage.message}</p>
+                  <div className="dashboard-message-actions">
+                    <a className="dashboard-message-reply" href={`mailto:${encodeURIComponent(selectedMessage.email)}?subject=${encodeURIComponent(`Re: ${selectedMessage.subject}`)}`}>
+                      <Mail size={14} /> Reply by email
+                    </a>
+                    <button type="button" onClick={() => void toggleRead(selectedMessage)}>
+                      <MailOpen size={14} /> Mark as {selectedMessage.is_read ? "unread" : "read"}
+                    </button>
+                    <button className="dashboard-delete" type="button" onClick={() => void deleteMessage(selectedMessage)}>
+                      <Trash2 size={14} /> Delete
+                    </button>
                   </div>
                 </article>
-              ))}
+              )}
             </div>
           )}
 

@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { useCallback, useEffect, useRef, useState, type FormEvent, type KeyboardEvent, type PointerEvent as ReactPointerEvent, type ReactNode } from "react";
-import { ArrowDown, ArrowDownRight, ArrowLeft, ArrowRight, ArrowUpRight, Award, BrainCircuit, ChartNoAxesColumn, Code2, Database, ExternalLink, Gamepad2, GitBranch, Mail, Menu, MoveUpRight, ShieldCheck, Smartphone, Send, X, type LucideIcon } from "lucide-react";
+import { ArrowDown, ArrowDownRight, ArrowLeft, ArrowRight, ArrowUpRight, Award, BrainCircuit, ChartNoAxesColumn, Check, Code2, Copy, Database, ExternalLink, Gamepad2, GitBranch, Mail, Menu, MoveUpRight, ShieldCheck, Smartphone, Send, X, type LucideIcon } from "lucide-react";
 import { FaGithub as Github, FaInstagram as Instagram, FaLinkedin as Linkedin, FaWhatsapp as WhatsApp } from "react-icons/fa6";
 import type { IconType } from "react-icons";
 import {
@@ -50,6 +50,7 @@ import {
 } from "react-icons/si";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { ScrollToPlugin } from "gsap/ScrollToPlugin";
 import ProjectImage from "./project-image";
 
 const links = [
@@ -561,89 +562,6 @@ function TechnologyCarousel() {
   );
 }
 
-function Playground() {
-  const [frequency, setFrequency] = useState(6);
-  const [isMoving, setIsMoving] = useState(true);
-  const [curveType, setCurveType] = useState<"wave" | "rose" | "lissajous">("wave");
-  const curveRef = useRef<SVGPathElement>(null);
-  const points = Array.from({ length: 181 }, (_, index) => {
-    const angle = (index / 180) * Math.PI * 2;
-    if (curveType === "rose") {
-      const radius = 96 * Math.cos(Math.round(frequency / 2) * angle);
-      return `${(180 + Math.cos(angle) * radius).toFixed(2)},${(150 + Math.sin(angle) * radius * 0.68).toFixed(2)}`;
-    }
-    if (curveType === "lissajous") {
-      const xFrequency = Math.round(frequency / 2);
-      return `${(180 + Math.sin(xFrequency * angle) * 108).toFixed(2)},${(150 + Math.sin((xFrequency + 1) * angle) * 76).toFixed(2)}`;
-    }
-    const radius = 94 + Math.sin(angle * frequency) * 18;
-    return `${(180 + Math.cos(angle) * radius).toFixed(2)},${(150 + Math.sin(angle) * radius * 0.62).toFixed(2)}`;
-  });
-  const curvePath = `M ${points.join(" L ")} Z`;
-
-  useEffect(() => {
-    const curve = curveRef.current;
-    if (!curve) return;
-
-    gsap.killTweensOf(curve);
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-      gsap.set(curve, { clearProps: "strokeDasharray,strokeDashoffset" });
-      return;
-    }
-
-    const length = curve.getTotalLength();
-    gsap.fromTo(
-      curve,
-      { strokeDasharray: length, strokeDashoffset: length },
-      { strokeDasharray: length, strokeDashoffset: 0, duration: 1.25, ease: "power2.out" },
-    );
-    return () => {
-      gsap.killTweensOf(curve);
-    };
-  }, [curvePath]);
-
-  return (
-    <div className={`playground-visual${isMoving ? " is-moving" : ""}`}>
-      <svg className="playground-svg" viewBox="0 0 360 300" role="img" aria-label={`A generative curve with ${frequency} oscillations`}>
-        <defs>
-          <radialGradient id="orbit-glow">
-            <stop offset="0" stopColor="#f2bd55" stopOpacity=".28" />
-            <stop offset="1" stopColor="#e28a3e" stopOpacity="0" />
-          </radialGradient>
-        </defs>
-        <circle cx="180" cy="150" r="116" fill="url(#orbit-glow)" />
-        <circle className="orbit-ring orbit-ring-outer" cx="180" cy="150" r="110" />
-        <circle className="orbit-ring orbit-ring-inner" cx="180" cy="150" r="72" />
-        <path className="orbit-path orbit-path-back" d={curvePath} transform="rotate(60 180 150)" />
-        <path ref={curveRef} className="orbit-path" d={curvePath} />
-        <circle className="orbit-core" cx="180" cy="150" r="5" />
-      </svg>
-      <div className="playground-coordinate coordinate-top">{curveType.toUpperCase()} / n={frequency}</div>
-      <div className="playground-coordinate coordinate-bottom">PARAMETRIC / 2D</div>
-      <div className="playground-controls">
-        <div className="curve-presets" role="group" aria-label="Choose a curve type">
-          {([
-            ["wave", "Wave"],
-            ["rose", "Rose"],
-            ["lissajous", "Lissajous"],
-          ] as const).map(([type, label]) => (
-            <button type="button" className={curveType === type ? "selected" : ""} key={type} onClick={() => setCurveType(type)} aria-pressed={curveType === type}>
-              {label}
-            </button>
-          ))}
-        </div>
-        <label htmlFor="frequency">Frequency <span>{frequency.toString().padStart(2, "0")}</span></label>
-        <input id="frequency" type="range" min="2" max="12" value={frequency} onChange={(event) => setFrequency(Number(event.target.value))} />
-        <button type="button" className="motion-toggle" onClick={() => setIsMoving((moving) => !moving)} aria-pressed={!isMoving}>
-          <span className={`toggle-indicator${isMoving ? " active" : ""}`} />
-          {isMoving ? "Motion on" : "Motion paused"}
-        </button>
-      </div>
-    </div>
-  );
-}
-
-
 function CertificateCarousel({ certificates: items }: { certificates: PortfolioCertificate[] }) {
   const viewportRef = useRef<HTMLDivElement>(null);
   const trackRef = useRef<HTMLDivElement>(null);
@@ -904,6 +822,7 @@ export default function Portfolio() {
   const [portfolioCertificates, setPortfolioCertificates] = useState(certificates);
   const [isSendingMessage, setIsSendingMessage] = useState(false);
   const [contactResult, setContactResult] = useState<{ type: "success" | "error"; message: string } | null>(null);
+  const [emailCopied, setEmailCopied] = useState(false);
   const categories = ["All", ...Array.from(new Set(portfolioProjects.map((project) => project.category)))];
   const visibleProjects = portfolioProjects.filter((project) => projectFilter === "All" || project.category === projectFilter);
   const contactEmail = process.env.NEXT_PUBLIC_CONTACT_EMAIL?.trim() || "a.bouramdnae.se24@lydex-se.ma";
@@ -1002,17 +921,43 @@ export default function Portfolio() {
     }
   };
 
+  const copyContactEmail = async () => {
+    try {
+      await navigator.clipboard.writeText(contactEmail);
+      setEmailCopied(true);
+    } catch (error) {
+      console.error("Could not copy the contact email address", error);
+      setContactResult({
+        type: "error",
+        message: "Couldn’t copy the email address. Use the email link to contact me directly.",
+      });
+    }
+  };
+
   useEffect(() => {
     if (yearRef.current) yearRef.current.textContent = String(new Date().getFullYear());
+    let isTransitioningToAbout = false;
+    let hasEnteredAbout = false;
+    let snapInterrupted = false;
+    let snapHeroToAbout = () => {};
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 24);
+      const snapThreshold = Math.min(160, window.innerHeight * 0.2);
+      if (window.scrollY < 2 && !isTransitioningToAbout) {
+        hasEnteredAbout = false;
+        snapInterrupted = false;
+      } else if (snapInterrupted && window.scrollY > snapThreshold) {
+        snapInterrupted = false;
+        hasEnteredAbout = true;
+      }
+      snapHeroToAbout();
     };
     handleScroll();
     window.addEventListener("scroll", handleScroll, { passive: true });
 
-    gsap.registerPlugin(ScrollTrigger);
+    gsap.registerPlugin(ScrollTrigger, ScrollToPlugin);
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const context = gsap.context(() => {
-      const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
       if (!reduceMotion) {
         gsap.from(".hero-title-line, .hero-description, .hero-actions", {
           y: 24,
@@ -1031,8 +976,103 @@ export default function Portfolio() {
             scrollTrigger: { trigger: element, start: "top 88%", once: true },
           });
         });
+        gsap.fromTo(".about-reveal-item", { y: 22, opacity: 0 }, {
+          y: 0,
+          opacity: 1,
+          duration: 0.7,
+          stagger: 0.13,
+          ease: "power2.out",
+          scrollTrigger: { trigger: ".about-story", start: "top 82%", once: true },
+        });
+        gsap.fromTo(".about-portrait-image", { scale: 0.94, opacity: 0.7 }, {
+          scale: 1,
+          opacity: 1,
+          duration: 1.1,
+          ease: "power2.out",
+          clearProps: "transform,opacity",
+          scrollTrigger: { trigger: ".about-portrait", start: "top 82%", once: true },
+        });
+        gsap.fromTo(".about-interest-card", { y: 14, opacity: 0 }, {
+          y: 0,
+          opacity: 1,
+          duration: 0.62,
+          stagger: 0.12,
+          ease: "power3.out",
+          clearProps: "transform,opacity",
+          scrollTrigger: { trigger: ".about-interest-card:first-child", start: "top 88%", once: true },
+        });
       }
     }, root);
+
+    const hero = root.current?.querySelector<HTMLElement>(".hero");
+    const heroArt = hero?.querySelector<HTMLElement>(".hero-art");
+    const codeMotifs = gsap.utils.toArray<HTMLElement>(".hero-code-float");
+    const hoverPointer = window.matchMedia("(hover: hover) and (pointer: fine)");
+    const motifX = codeMotifs.map((element) => gsap.quickTo(element, "x", { duration: 0.8, ease: "power3.out" }));
+    const motifY = codeMotifs.map((element) => gsap.quickTo(element, "y", { duration: 0.8, ease: "power3.out" }));
+    const handleHeroPointerMove = (event: PointerEvent) => {
+      if (!heroArt || reduceMotion || !hoverPointer.matches) return;
+      const bounds = heroArt.getBoundingClientRect();
+      const x = (event.clientX - bounds.left) / bounds.width;
+      const y = (event.clientY - bounds.top) / bounds.height;
+      heroArt.style.setProperty("--hero-pointer-x", `${Math.max(0, Math.min(1, x)) * 100}%`);
+      heroArt.style.setProperty("--hero-pointer-y", `${Math.max(0, Math.min(1, y)) * 100}%`);
+      codeMotifs.forEach((element, index) => {
+        const depth = Number(element.dataset.depth) || 12;
+        motifX[index](Math.max(-1, Math.min(1, x - 0.5)) * depth);
+        motifY[index](Math.max(-1, Math.min(1, y - 0.5)) * depth);
+      });
+    };
+    const resetHeroPointer = () => {
+      codeMotifs.forEach((_, index) => {
+        motifX[index](0);
+        motifY[index](0);
+      });
+      heroArt?.style.setProperty("--hero-pointer-x", "50%");
+      heroArt?.style.setProperty("--hero-pointer-y", "50%");
+    };
+    heroArt?.addEventListener("pointermove", handleHeroPointerMove);
+    heroArt?.addEventListener("pointerleave", resetHeroPointer);
+
+    const aboutSection = root.current?.querySelector<HTMLElement>("#about");
+    const scrollRoot = document.documentElement;
+    const previousScrollBehavior = scrollRoot.style.scrollBehavior;
+    let scrollTween: gsap.core.Tween | null = null;
+    const restoreScrollBehavior = () => {
+      scrollRoot.style.scrollBehavior = previousScrollBehavior;
+      isTransitioningToAbout = false;
+      scrollTween = null;
+    };
+    const transitionToAbout = () => {
+      if (!aboutSection || hasEnteredAbout || reduceMotion) return;
+      hasEnteredAbout = true;
+      isTransitioningToAbout = true;
+      scrollRoot.style.scrollBehavior = "auto";
+      const aboutTop = aboutSection.getBoundingClientRect().top + window.scrollY;
+      scrollTween = gsap.to(window, {
+        duration: 0.75,
+        ease: "power2.inOut",
+        scrollTo: {
+          y: aboutTop,
+          autoKill: true,
+        },
+        onComplete: () => {
+          window.scrollTo(0, aboutSection.getBoundingClientRect().top + window.scrollY);
+          restoreScrollBehavior();
+        },
+        onInterrupt: () => {
+          restoreScrollBehavior();
+          hasEnteredAbout = false;
+          snapInterrupted = true;
+        },
+      });
+    };
+    snapHeroToAbout = () => {
+      const snapThreshold = Math.min(160, window.innerHeight * 0.2);
+      if (!reduceMotion && !snapInterrupted && !isTransitioningToAbout && !hasEnteredAbout && window.scrollY > 2 && window.scrollY <= snapThreshold) {
+        transitionToAbout();
+      }
+    };
 
     const observer = new IntersectionObserver(
       (entries) => {
@@ -1045,6 +1085,10 @@ export default function Portfolio() {
 
     return () => {
       window.removeEventListener("scroll", handleScroll);
+      heroArt?.removeEventListener("pointermove", handleHeroPointerMove);
+      heroArt?.removeEventListener("pointerleave", resetHeroPointer);
+      scrollTween?.kill();
+      scrollRoot.style.scrollBehavior = previousScrollBehavior;
       observer.disconnect();
       context.revert();
     };
@@ -1093,12 +1137,25 @@ export default function Portfolio() {
             <span className="hero-title-line">developer<span className="title-period">.</span></span>
           </h1>
           <p className="hero-description">I build web and mobile apps with Dart, Flutter, Firebase, React Native, and Android Studio, and explore AI.</p>
+          <div className="hero-meta"><span>2 BAC SCIENCES MATHÉMATIQUES</span><i /><span>RABAT, MOROCCO</span></div>
           <div className="hero-actions">
             <a className="button button-primary" href="#projects">Explore my work <ArrowDownRight size={17} /></a>
             <a className="button button-text" href="#contact">Get in touch <ArrowRight size={16} /></a>
           </div>
         </div>
         <div className="hero-art">
+          <div className="hero-code-field" aria-hidden="true">
+            <span className="hero-code-float hero-code-float-python" data-depth="13"><span className="hero-code-symbol"><SiPython size={22} /><i>python</i></span></span>
+            <span className="hero-code-float hero-code-float-react" data-depth="19"><span className="hero-code-symbol"><SiReact size={23} /><i>react</i></span></span>
+            <span className="hero-code-float hero-code-float-js" data-depth="10"><span className="hero-code-symbol"><SiJavascript size={22} /><i>javascript</i></span></span>
+            <span className="hero-code-float hero-code-float-dart" data-depth="16"><span className="hero-code-symbol"><SiDart size={22} /><i>flutter</i></span></span>
+            <span className="hero-code-float hero-code-float-code" data-depth="24"><span className="hero-code-symbol"><Code2 size={21} /><i>&lt;build /&gt;</i></span></span>
+            <span className="hero-code-float hero-code-float-next" data-depth="14"><span className="hero-code-symbol"><SiNextdotjs size={21} /><i>next.js</i></span></span>
+            <span className="hero-code-float hero-code-float-typescript" data-depth="18"><span className="hero-code-symbol"><SiTypescript size={21} /><i>typescript</i></span></span>
+            <span className="hero-code-float hero-code-float-tailwind" data-depth="11"><span className="hero-code-symbol"><SiTailwindcss size={21} /><i>tailwind</i></span></span>
+            <span className="hero-code-float hero-code-float-docker" data-depth="17"><span className="hero-code-symbol"><SiDocker size={22} /><i>docker</i></span></span>
+            <span className="hero-code-float hero-code-float-fastapi" data-depth="12"><span className="hero-code-symbol"><SiFastapi size={20} /><i>fastapi</i></span></span>
+          </div>
           <div className="hero-ground" aria-hidden="true" />
           <div className="hero-portrait">
             <Image
@@ -1118,21 +1175,62 @@ export default function Portfolio() {
 
       <section className="about-section section-shell section-pad" id="about" aria-labelledby="about-heading">
         <div className="section-heading reveal">
-          <Label>01 / A little about me</Label>
-          <span className="section-aside">COMPUTER SCIENCE STUDENT</span>
+          <Label>01 / PROFILE</Label>
+          <span className="section-aside">2 BAC SCIENCES MATHÉMATIQUES</span>
         </div>
-        <div className="about-grid">
-          <h2 id="about-heading" className="about-statement reveal">Computer science,<br /><span>put into practice.</span></h2>
-          <div className="about-copy reveal">
-            <p>I study computer science at LYDEX de Rabat, where I’m developing a foundation in programming, mathematics, and software design.</p>
-            <p>I build web applications and work on projects involving data analysis, AI, and interactive graphics. I’m also interested in game development and contributing to open-source software.</p>
-            <a className="inline-link" href="https://github.com/ahmedbouramdane" target="_blank" rel="noreferrer">View my work on GitHub <MoveUpRight size={15} /></a>
+        <div className="about-layout">
+          <figure className="about-portrait reveal">
+            <Image
+              src="/official-img-cutout.webp"
+              alt="Ahmed Bouramdane"
+              fill
+              sizes="(max-width: 760px) 78vw, 360px"
+              className="about-portrait-image"
+            />
+            <span className="about-portrait-glow" aria-hidden="true" />
+            <span className="about-portrait-index"><span /> PROFILE / 2026</span>
+            <span className="about-portrait-note">LEARNING<br />BY BUILDING</span>
+            <figcaption><span className="about-status-dot" /> Sciences Mathématiques student <span>·</span> Rabat, Morocco</figcaption>
+          </figure>
+          <div className="about-story">
+            <div className="about-intro about-reveal-item">
+              <div className="about-title-row">
+                <div>
+                  <span className="about-kicker">A little about who I am</span>
+                  <h2 id="about-heading" className="about-statement">About me<span aria-hidden="true">.</span></h2>
+                </div>
+                <span className="about-title-index">01<br /><i /> PROFILE</span>
+              </div>
+              <p className="about-lead">I’m Ahmed Bouramdane, a 2 BAC Sciences Mathématiques student at LYDEX de Rabat. I’ve been curious about coding since childhood, and I love exploring how software, mathematics, and AI can turn difficult questions into practical solutions.</p>
+            </div>
+            <div className="about-focus about-reveal-item">
+              <div className="about-focus-heading">
+                <span>THE THINGS THAT DRIVE ME</span>
+                <span>03 AREAS</span>
+              </div>
+              <div className="about-interests" aria-label="Areas of interest">
+                <article className="about-interest-card">
+                  <div className="about-interest-card-top"><span className="about-interest-icon"><Code2 size={18} aria-hidden="true" /></span><span className="about-interest-index">01</span></div>
+                  <h3>Software <span>&amp; web</span></h3>
+                  <p>Turning thoughtful ideas into useful digital experiences.</p>
+                </article>
+                <article className="about-interest-card">
+                  <div className="about-interest-card-top"><span className="about-interest-icon"><BrainCircuit size={18} aria-hidden="true" /></span><span className="about-interest-index">02</span></div>
+                  <h3>AI <span>&amp; mathematics</span></h3>
+                  <p>Finding patterns and exploring how intelligent systems work.</p>
+                </article>
+                <article className="about-interest-card">
+                  <div className="about-interest-card-top"><span className="about-interest-icon"><Gamepad2 size={18} aria-hidden="true" /></span><span className="about-interest-index">03</span></div>
+                  <h3>Robotics <span>&amp; creative tech</span></h3>
+                  <p>Learning through hands-on experiments and playful technology.</p>
+                </article>
+              </div>
+            </div>
+            <div className="about-story-footer about-reveal-item">
+              <p><span className="about-footer-mark" aria-hidden="true">↗</span><span>I’m working toward becoming a computer scientist and AI engineer, creating technology that makes a meaningful difference.</span></p>
+              <a className="inline-link" href="https://github.com/ahmedbouramdane" target="_blank" rel="noreferrer">Explore my projects <MoveUpRight size={15} /></a>
+            </div>
           </div>
-        </div>
-        <div className="about-foot reveal">
-          <div className="about-foot-item"><span className="foot-index">A</span><span>Software engineering</span></div>
-          <div className="about-foot-item"><span className="foot-index">B</span><span>AI &amp; data analysis</span></div>
-          <div className="about-foot-item"><span className="foot-index">C</span><span>Interactive graphics</span></div>
         </div>
       </section>
 
@@ -1171,7 +1269,7 @@ export default function Portfolio() {
 
       <section className="projects-section section-shell section-pad" id="projects" aria-labelledby="projects-heading">
         <div className="projects-intro reveal">
-          <h2 id="projects-heading">Selected projects.</h2>
+          <div><Label>03 / Selected work</Label><h2 id="projects-heading">Selected projects.</h2></div>
           <p>Experiments and tools built to solve problems, learn deeply, and turn ideas into working software.</p>
         </div>
         <div className="project-filters" aria-label="Filter projects">
@@ -1187,48 +1285,48 @@ export default function Portfolio() {
         <p className="project-note reveal">{String(visibleProjects.length).padStart(2, "0")} projects shown <span>·</span> Filter by area to explore the work.</p>
       </section>
 
-      <section className="playground-section section-shell section-pad" id="playground" aria-labelledby="playground-heading">
-        <div className="section-heading reveal">
-          <Label>04 / Interactive demo</Label>
-          <span className="section-aside">PARAMETRIC CURVE</span>
-        </div>
-        <div className="playground-layout">
-          <div className="playground-copy reveal">
-            <span className="experiment-tag">GENERATOR / 001</span>
-            <h2 id="playground-heading">Explore a<br /><span>parametric curve.</span></h2>
-            <p>Choose a curve family, then tune its frequency. Each point is calculated from a parametric equation and drawn as an animated path.</p>
-            <div className="experiment-math"><span>f(θ, n) — parametric form</span><span>n = 2–12</span></div>
-            <span className="experiment-caption">Change the curve or frequency to generate a new form.</span>
-          </div>
-          <div className="reveal"><Playground /></div>
-        </div>
-      </section>
-
       <section className="journey-section section-shell section-pad" id="journey" aria-labelledby="journey-heading">
         <div className="section-heading reveal">
-          <Label>05 / The ongoing journey</Label>
+          <Label>04 / THE LEARNING JOURNEY</Label>
           <span className="section-aside">STUDIES &amp; PROJECTS</span>
         </div>
         <div className="journey-layout">
           <div className="journey-intro reveal">
             <h2 id="journey-heading">Studies and<br /><span>independent projects.</span></h2>
-            <p>My current studies and the areas I explore through personal projects.</p>
+            <p>A path shaped by an early curiosity for coding, learning on my own, and getting involved in the school clubs I care about.</p>
           </div>
           <div className="timeline">
             <article className="timeline-entry reveal">
-              <div className="timeline-marker"><span /></div>
-              <div className="timeline-content"><span className="timeline-label">EDUCATION</span><h3>Computer science at LYDEX</h3><p>Studying computer science at LYDEX de Rabat, with a focus on programming, mathematics, and problem-solving.</p><span className="timeline-meta">RABAT, MOROCCO</span></div>
+              <div className="timeline-marker" aria-hidden="true">01</div>
+              <div className="timeline-content">
+                <div className="timeline-card-heading"><span className="timeline-label">SELF-TAUGHT</span><span className="timeline-meta">SINCE CHILDHOOD</span></div>
+                <h3>A curiosity for coding</h3>
+                <p>I’ve been drawn to coding since childhood. I keep building on that curiosity through self-directed learning, exploring new tools, and turning what I learn into small experiments.</p>
+              </div>
             </article>
             <article className="timeline-entry reveal">
-              <div className="timeline-marker"><span /></div>
-              <div className="timeline-content"><span className="timeline-label">PERSONAL PROJECTS</span><h3>Software, data, and interactive graphics</h3><p>Exploring backend development, data analysis, language models, and interactive projects through independent work.</p><span className="timeline-meta">ONGOING</span></div>
+              <div className="timeline-marker" aria-hidden="true">02</div>
+              <div className="timeline-content">
+                <div className="timeline-card-heading"><span className="timeline-label">HIGH SCHOOL</span><span className="timeline-meta">RABAT, MOROCCO</span></div>
+                <h3>2 BAC Sciences Mathématiques at LYDEX</h3>
+                <p>I’m studying the Sciences Mathématiques track (2 BAC SM) at LYDEX de Rabat. Outside class, I’m active in the programming, robotics, and organization clubs.</p>
+                <div className="timeline-tags" aria-label="LYDEX club activities"><span>Programming</span><span>Robotics</span><span>Organization</span></div>
+              </div>
+            </article>
+            <article className="timeline-entry reveal">
+              <div className="timeline-marker" aria-hidden="true">03</div>
+              <div className="timeline-content">
+                <div className="timeline-card-heading"><span className="timeline-label">INDEPENDENT PROJECTS</span><span className="timeline-meta">ONGOING</span></div>
+                <h3>Learning by making</h3>
+                <p>I apply what I learn to personal projects across software, data, AI, and interactive experiences—building practical skills one idea at a time.</p>
+              </div>
             </article>
           </div>
         </div>
       </section>
 
       <section className="contact-section section-shell" id="contact" aria-labelledby="contact-heading">
-        <div className="contact-topline reveal"><Label>06 / Contact</Label><span className="section-aside">RABAT, MOROCCO</span></div>
+        <div className="contact-topline reveal"><Label>05 / Contact</Label><span className="section-aside">RABAT, MOROCCO</span></div>
         <div className="contact-layout">
           <div className="contact-content reveal">
             <span className="contact-overline">Available for <span>opportunities.</span></span>
@@ -1261,6 +1359,10 @@ export default function Portfolio() {
                 <ArrowUpRight size={15} aria-hidden="true" />
               </a>
             </div>
+            <button className="contact-copy-email" type="button" onClick={() => void copyContactEmail()}>
+              {emailCopied ? <Check size={14} aria-hidden="true" /> : <Copy size={14} aria-hidden="true" />}
+              {emailCopied ? "Email copied" : "Copy email address"}
+            </button>
           </div>
 
           <form className="contact-form reveal" ref={contactFormRef} onSubmit={submitContactForm}>

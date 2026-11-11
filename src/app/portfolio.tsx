@@ -1,8 +1,9 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { useCallback, useEffect, useRef, useState, type FormEvent, type KeyboardEvent, type PointerEvent as ReactPointerEvent, type ReactNode } from "react";
-import { ArrowDown, ArrowDownRight, ArrowLeft, ArrowRight, ArrowUpRight, Award, BrainCircuit, ChartNoAxesColumn, Check, Code2, Copy, Database, ExternalLink, Gamepad2, GitBranch, Mail, Menu, MoveUpRight, ShieldCheck, Smartphone, Send, X, type LucideIcon } from "lucide-react";
+import { ArrowDown, ArrowDownRight, ArrowLeft, ArrowRight, ArrowUpRight, Award, BrainCircuit, ChartNoAxesColumn, Check, Code2, Copy, Database, ExternalLink, FileText, Gamepad2, GitBranch, Mail, Menu, MoveUpRight, ShieldCheck, Smartphone, Send, X, type LucideIcon } from "lucide-react";
 import { FaGithub as Github, FaInstagram as Instagram, FaLinkedin as Linkedin, FaWhatsapp as WhatsApp } from "react-icons/fa6";
 import type { IconType } from "react-icons";
 import {
@@ -1228,7 +1229,10 @@ export default function Portfolio() {
             </div>
             <div className="about-story-footer about-reveal-item">
               <p><span className="about-footer-mark" aria-hidden="true">↗</span><span>I’m working toward becoming a computer scientist and AI engineer, creating technology that makes a meaningful difference.</span></p>
-              <a className="inline-link" href="https://github.com/ahmedbouramdane" target="_blank" rel="noreferrer">Explore my projects <MoveUpRight size={15} /></a>
+              <div className="about-story-actions">
+                <Link className="cv-link" href="/cv"><FileText size={15} aria-hidden="true" /> View my CV <MoveUpRight size={14} aria-hidden="true" /></Link>
+                <a className="inline-link" href="https://github.com/ahmedbouramdane" target="_blank" rel="noreferrer">Explore my projects <MoveUpRight size={15} /></a>
+              </div>
             </div>
           </div>
         </div>

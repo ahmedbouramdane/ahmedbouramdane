@@ -12,6 +12,11 @@ export default function ProjectImage({ src, alt, className, sizes }: ProjectImag
     return <Image className={className} src={src} alt={alt} fill sizes={sizes ?? "100vw"} />;
   }
 
+  if (src.startsWith("/api/portfolio-images/")) {
+    // eslint-disable-next-line @next/next/no-img-element
+    return <img className={className} src={src} alt={alt} />;
+  }
+
   if (!src.startsWith("https://") && !src.startsWith("blob:")) {
     return <span className={className} role={alt ? "img" : undefined} aria-label={alt || undefined} />;
   }

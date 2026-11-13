@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from "react";
 import Link from "next/link";
-import { ArrowDown, ArrowLeft, ArrowUp, Award, ChevronLeft, ChevronRight, FolderKanban, ImagePlus, Link2, LogOut, Mail, MailOpen, Pencil, Plus, RefreshCw, Save, Search, ShieldCheck, Trash2, Upload, X } from "lucide-react";
+import { ArrowDown, ArrowLeft, ArrowUp, Award, ChevronLeft, ChevronRight, FolderKanban, ImagePlus, Link2, LogOut, Mail, MailOpen, MessageSquareText, Pencil, Plus, RefreshCw, Save, Search, ShieldCheck, Trash2, Upload, X } from "lucide-react";
 import ProjectImage from "../project-image";
 
 type AdminSession = { username: string };
@@ -16,6 +16,25 @@ type AdminMessage = {
   is_read: boolean;
 };
 type AdminMessagePage = { items: AdminMessage[]; total: number; limit: number; offset: number };
+type AdminChatAccount = { id: number; full_name: string; username: string; email: string };
+type AdminChatSummary = {
+  id: string;
+  title: string;
+  created_at: string;
+  updated_at: string;
+  account: AdminChatAccount;
+  last_message: string;
+  message_count: number;
+};
+type AdminChatPage = { items: AdminChatSummary[]; total: number; limit: number; offset: number };
+type AdminChatMessage = {
+  id: number;
+  role: "user" | "assistant";
+  content: string;
+  sources: { title: string; url: string }[];
+  created_at: string;
+};
+type AdminChatDetail = Omit<AdminChatSummary, "last_message" | "message_count"> & { messages: AdminChatMessage[] };
 type MessageFilter = "all" | "unread" | "read";
 type ManagedProject = {
   id: number;
@@ -26,7 +45,6 @@ type ManagedProject = {
   stack: string[];
   repo: string;
   image: string;
-  visual: "game" | "database" | "archive" | "network";
 };
 type ProjectDraft = Omit<ManagedProject, "id" | "sort_order" | "stack"> & { stack: string };
 type ProjectImageMode = "upload" | "url";
@@ -44,6 +62,7 @@ type ManagedCertificate = {
 type CertificateDraft = Omit<ManagedCertificate, "id" | "sort_order">;
 
 const pageSize = 50;
+const chatPageSize = 30;
 
 function emptyProjectDraft(): ProjectDraft {
   return {
@@ -53,7 +72,6 @@ function emptyProjectDraft(): ProjectDraft {
     stack: "",
     repo: "",
     image: "",
-    visual: "game",
   };
 }
 
@@ -103,6 +121,55 @@ function isAdminMessagePage(value: unknown): value is AdminMessagePage {
     && typeof value.offset === "number";
 }
 
+function isAdminChatAccount(value: unknown): value is AdminChatAccount {
+  return isRecord(value)
+    && typeof value.id === "number"
+    && typeof value.full_name === "string"
+    && typeof value.username === "string"
+    && typeof value.email === "string";
+}
+
+function isAdminChatSummary(value: unknown): value is AdminChatSummary {
+  return isRecord(value)
+    && typeof value.id === "string"
+    && typeof value.title === "string"
+    && typeof value.created_at === "string"
+    && typeof value.updated_at === "string"
+    && isAdminChatAccount(value.account)
+    && typeof value.last_message === "string"
+    && typeof value.message_count === "number";
+}
+
+function isAdminChatPage(value: unknown): value is AdminChatPage {
+  return isRecord(value)
+    && Array.isArray(value.items)
+    && value.items.every(isAdminChatSummary)
+    && typeof value.total === "number"
+    && typeof value.limit === "number"
+    && typeof value.offset === "number";
+}
+
+function isAdminChatMessage(value: unknown): value is AdminChatMessage {
+  return isRecord(value)
+    && typeof value.id === "number"
+    && (value.role === "user" || value.role === "assistant")
+    && typeof value.content === "string"
+    && Array.isArray(value.sources)
+    && value.sources.every((source) => isRecord(source) && typeof source.title === "string" && typeof source.url === "string")
+    && typeof value.created_at === "string";
+}
+
+function isAdminChatDetail(value: unknown): value is AdminChatDetail {
+  return isRecord(value)
+    && typeof value.id === "string"
+    && typeof value.title === "string"
+    && typeof value.created_at === "string"
+    && typeof value.updated_at === "string"
+    && isAdminChatAccount(value.account)
+    && Array.isArray(value.messages)
+    && value.messages.every(isAdminChatMessage);
+}
+
 function isManagedProject(value: unknown): value is ManagedProject {
   if (typeof value !== "object" || value === null) return false;
   return "id" in value
@@ -123,9 +190,7 @@ function isManagedProject(value: unknown): value is ManagedProject {
     && "repo" in value
     && typeof value.repo === "string"
     && "image" in value
-    && typeof value.image === "string"
-    && "visual" in value
-    && (value.visual === "game" || value.visual === "database" || value.visual === "archive" || value.visual === "network");
+    && typeof value.image === "string";
 }
 
 function isManagedProjectList(value: unknown): value is ManagedProject[] {
@@ -168,8 +233,10 @@ function parseManagedCertificateList(value: unknown): ManagedCertificate[] | nul
     : certificates.filter((certificate): certificate is ManagedCertificate => certificate !== null);
 }
 
-function isUploadedImage(value: unknown, directory: "/projects/" | "/certificates/"): value is { image: string } {
-  return isRecord(value) && typeof value.image === "string" && value.image.startsWith(directory);
+function isUploadedImage(value: unknown): value is { image: string } {
+  return isRecord(value)
+    && typeof value.image === "string"
+    && /^\/api\/portfolio-images\/[A-Za-z0-9_-]{24,48}$/.test(value.image);
 }
 
 async function dashboardRequest(url: string, init?: RequestInit): Promise<unknown> {
@@ -194,26 +261,31 @@ function messageDate(value: string) {
   return Number.isNaN(date.getTime()) ? "Date unavailable" : date.toLocaleString();
 }
 
-export default function DashboardClient({ allowLocalUploads }: { allowLocalUploads: boolean }) {
+export default function DashboardClient() {
   const [username, setUsername] = useState("");
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isCheckingSession, setIsCheckingSession] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoadingMessages, setIsLoadingMessages] = useState(false);
+  const [isLoadingChats, setIsLoadingChats] = useState(false);
+  const [isLoadingChatDetail, setIsLoadingChatDetail] = useState(false);
   const [isLoadingProjects, setIsLoadingProjects] = useState(false);
   const [isSavingProject, setIsSavingProject] = useState(false);
   const [isLoadingCertificates, setIsLoadingCertificates] = useState(false);
   const [isSavingCertificate, setIsSavingCertificate] = useState(false);
   const [messages, setMessages] = useState<AdminMessage[]>([]);
+  const [chats, setChats] = useState<AdminChatSummary[]>([]);
+  const [selectedChat, setSelectedChat] = useState<AdminChatDetail | null>(null);
+  const [selectedChatId, setSelectedChatId] = useState<string | null>(null);
   const [projects, setProjects] = useState<ManagedProject[]>([]);
   const [certificates, setCertificates] = useState<ManagedCertificate[]>([]);
-  const [activeView, setActiveView] = useState<"messages" | "projects" | "certificates">("messages");
+  const [activeView, setActiveView] = useState<"messages" | "projects" | "certificates" | "chats">("messages");
   const [projectDraft, setProjectDraft] = useState<ProjectDraft>(emptyProjectDraft);
   const [certificateDraft, setCertificateDraft] = useState<CertificateDraft>(emptyCertificateDraft);
-  const [projectImageMode, setProjectImageMode] = useState<ProjectImageMode>(allowLocalUploads ? "upload" : "url");
+  const [projectImageMode, setProjectImageMode] = useState<ProjectImageMode>("upload");
   const [projectImageFile, setProjectImageFile] = useState<File | null>(null);
   const [projectImagePreview, setProjectImagePreview] = useState<string | null>(null);
-  const [certificateImageMode, setCertificateImageMode] = useState<ProjectImageMode>(allowLocalUploads ? "upload" : "url");
+  const [certificateImageMode, setCertificateImageMode] = useState<ProjectImageMode>("upload");
   const [certificateImageFile, setCertificateImageFile] = useState<File | null>(null);
   const [certificateImagePreview, setCertificateImagePreview] = useState<string | null>(null);
   const [editingProjectId, setEditingProjectId] = useState<number | null>(null);
@@ -223,6 +295,8 @@ export default function DashboardClient({ allowLocalUploads }: { allowLocalUploa
   const [filter, setFilter] = useState<MessageFilter>("all");
   const [search, setSearch] = useState("");
   const [selectedMessageId, setSelectedMessageId] = useState<number | null>(null);
+  const [chatTotal, setChatTotal] = useState(0);
+  const [chatOffset, setChatOffset] = useState(0);
   const [notice, setNotice] = useState("");
   const [error, setError] = useState("");
 
@@ -246,6 +320,61 @@ export default function DashboardClient({ allowLocalUploads }: { allowLocalUploa
       setIsLoadingMessages(false);
     }
   }, []);
+
+  const loadChats = useCallback(async (nextOffset: number) => {
+    setIsLoadingChats(true);
+    setError("");
+    try {
+      const payload = await dashboardRequest(`/api/dashboard/chats?limit=${chatPageSize}&offset=${nextOffset}`);
+      if (!isAdminChatPage(payload)) throw new Error("The dashboard returned an invalid AI chat list.");
+      setChats(payload.items);
+      setChatTotal(payload.total);
+      setChatOffset(nextOffset);
+      setSelectedChat((current) => current && payload.items.some((chat) => chat.id === current.id) ? current : null);
+      setSelectedChatId((current) => current && payload.items.some((chat) => chat.id === current) ? current : null);
+      return true;
+    } catch (requestError) {
+      setError(requestError instanceof Error ? requestError.message : "AI chats could not be loaded.");
+      if (requestError instanceof DashboardRequestError && requestError.status === 401) setIsAuthenticated(false);
+      return false;
+    } finally {
+      setIsLoadingChats(false);
+    }
+  }, []);
+
+  const loadChatDetail = useCallback(async (conversationId: string) => {
+    setIsLoadingChatDetail(true);
+    setSelectedChatId(conversationId);
+    setSelectedChat(null);
+    setError("");
+    try {
+      const payload = await dashboardRequest(`/api/dashboard/chats/${conversationId}`);
+      if (!isAdminChatDetail(payload)) throw new Error("The dashboard returned an invalid AI chat.");
+      setSelectedChat(payload);
+    } catch (requestError) {
+      setError(requestError instanceof Error ? requestError.message : "The AI chat could not be loaded.");
+      if (requestError instanceof DashboardRequestError && requestError.status === 401) setIsAuthenticated(false);
+    } finally {
+      setIsLoadingChatDetail(false);
+    }
+  }, []);
+
+  const deleteChat = async (conversationId: string) => {
+    if (!window.confirm("Permanently delete this AI conversation and its messages?")) return;
+    setError("");
+    setNotice("");
+    try {
+      await dashboardRequest(`/api/dashboard/chats/${conversationId}`, { method: "DELETE" });
+      setSelectedChat(null);
+      setSelectedChatId(null);
+      const nextOffset = chats.length === 1 && chatOffset > 0 ? Math.max(0, chatOffset - chatPageSize) : chatOffset;
+      await loadChats(nextOffset);
+      setNotice("AI conversation deleted.");
+    } catch (requestError) {
+      setError(requestError instanceof Error ? requestError.message : "The AI conversation could not be deleted.");
+      if (requestError instanceof DashboardRequestError && requestError.status === 401) setIsAuthenticated(false);
+    }
+  };
 
   const loadProjects = useCallback(async () => {
     setIsLoadingProjects(true);
@@ -337,7 +466,7 @@ export default function DashboardClient({ allowLocalUploads }: { allowLocalUploa
         if (!active) return;
         setUsername(payload.username);
         setIsAuthenticated(true);
-        await Promise.all([loadMessages(0), loadProjects(), loadCertificates()]);
+        await Promise.all([loadMessages(0), loadProjects(), loadCertificates(), loadChats(0)]);
       } catch (requestError) {
         if (!active) return;
         setIsAuthenticated(false);
@@ -351,7 +480,7 @@ export default function DashboardClient({ allowLocalUploads }: { allowLocalUploa
     return () => {
       active = false;
     };
-  }, [loadCertificates, loadMessages, loadProjects]);
+  }, [loadCertificates, loadChats, loadMessages, loadProjects]);
 
   const unreadCount = useMemo(() => messages.filter((message) => !message.is_read).length, [messages]);
   const visibleMessages = useMemo(() => {
@@ -405,6 +534,11 @@ export default function DashboardClient({ allowLocalUploads }: { allowLocalUploa
       await dashboardRequest("/api/dashboard/logout", { method: "POST" });
       setIsAuthenticated(false);
       setMessages([]);
+      setChats([]);
+      setSelectedChat(null);
+      setSelectedChatId(null);
+      setChatTotal(0);
+      setChatOffset(0);
       setProjects([]);
       setCertificates([]);
       setTotal(0);
@@ -416,7 +550,7 @@ export default function DashboardClient({ allowLocalUploads }: { allowLocalUploa
       setCertificateDraft(emptyCertificateDraft());
       setCertificateImageFile(null);
       setCertificateImagePreview(null);
-      setCertificateImageMode(allowLocalUploads ? "upload" : "url");
+      setCertificateImageMode("upload");
       setProjectImageFile(null);
       setProjectImagePreview(null);
       setNotice("You have been signed out.");
@@ -477,7 +611,7 @@ export default function DashboardClient({ allowLocalUploads }: { allowLocalUploa
           method: "POST",
           body: upload,
         });
-        if (!isUploadedImage(uploadResult, "/projects/")) throw new Error("The dashboard returned an invalid uploaded image.");
+        if (!isUploadedImage(uploadResult)) throw new Error("The dashboard returned an invalid uploaded image.");
         image = uploadResult.image;
       }
       const payload = {
@@ -502,7 +636,7 @@ export default function DashboardClient({ allowLocalUploads }: { allowLocalUploa
       setProjectDraft(emptyProjectDraft());
       setProjectImageFile(null);
       setProjectImagePreview(null);
-      setProjectImageMode(allowLocalUploads ? "upload" : "url");
+      setProjectImageMode("upload");
       setEditingProjectId(null);
       setNotice(editingProjectId === null ? "Project added to your portfolio." : "Project changes saved.");
     } catch (requestError) {
@@ -522,7 +656,6 @@ export default function DashboardClient({ allowLocalUploads }: { allowLocalUploa
       stack: project.stack.join(", "),
       repo: project.repo,
       image: project.image,
-      visual: project.visual,
     });
     setProjectImageMode(project.image.startsWith("https://") ? "url" : "upload");
     setProjectImageFile(null);
@@ -534,7 +667,7 @@ export default function DashboardClient({ allowLocalUploads }: { allowLocalUploa
   const cancelProjectEdit = () => {
     setEditingProjectId(null);
     setProjectDraft(emptyProjectDraft());
-    setProjectImageMode(allowLocalUploads ? "upload" : "url");
+    setProjectImageMode("upload");
     setProjectImageFile(null);
     setProjectImagePreview(null);
   };
@@ -593,7 +726,7 @@ export default function DashboardClient({ allowLocalUploads }: { allowLocalUploa
           method: "POST",
           body: upload,
         });
-        if (!isUploadedImage(uploadResult, "/certificates/")) {
+        if (!isUploadedImage(uploadResult)) {
           throw new Error("The dashboard returned an invalid certificate image.");
         }
         image = uploadResult.image;
@@ -616,7 +749,7 @@ export default function DashboardClient({ allowLocalUploads }: { allowLocalUploa
       setCertificateDraft(emptyCertificateDraft());
       setCertificateImageFile(null);
       setCertificateImagePreview(null);
-      setCertificateImageMode(allowLocalUploads ? "upload" : "url");
+      setCertificateImageMode("upload");
       setEditingCertificateId(null);
       setNotice(editingCertificateId === null ? "Certificate added to your portfolio." : "Certificate changes saved.");
     } catch (requestError) {
@@ -648,7 +781,7 @@ export default function DashboardClient({ allowLocalUploads }: { allowLocalUploa
   const cancelCertificateEdit = () => {
     setEditingCertificateId(null);
     setCertificateDraft(emptyCertificateDraft());
-    setCertificateImageMode(allowLocalUploads ? "upload" : "url");
+    setCertificateImageMode("upload");
     setCertificateImageFile(null);
     setCertificateImagePreview(null);
   };
@@ -734,8 +867,8 @@ export default function DashboardClient({ allowLocalUploads }: { allowLocalUploa
 
         <section className="dashboard-heading">
           <p className="dashboard-eyebrow">PRIVATE DASHBOARD / {username}</p>
-          <h1>{activeView === "messages" ? "Messages" : activeView === "projects" ? "Projects" : "Certificates"}<span>.</span></h1>
-          <p>{activeView === "messages" ? "Review and manage messages sent through your portfolio." : activeView === "projects" ? "Edit the projects shown on your public portfolio." : "Add, update, and arrange the credentials shown on your public portfolio."}</p>
+          <h1>{activeView === "messages" ? "Messages" : activeView === "projects" ? "Projects" : activeView === "certificates" ? "Certificates" : "AI chats"}<span>.</span></h1>
+          <p>{activeView === "messages" ? "Review and manage messages sent through your portfolio." : activeView === "projects" ? "Edit the projects shown on your public portfolio." : activeView === "certificates" ? "Add, update, and arrange the credentials shown on your public portfolio." : "Review account details and manage saved AI conversations."}</p>
         </section>
 
         <nav className="dashboard-view-switch" aria-label="Dashboard sections">
@@ -747,6 +880,9 @@ export default function DashboardClient({ allowLocalUploads }: { allowLocalUploa
           </button>
           <button type="button" className={activeView === "certificates" ? "selected" : ""} onClick={() => { setActiveView("certificates"); setError(""); setNotice(""); }} aria-pressed={activeView === "certificates"}>
             <Award size={16} /> Certificates <span>{certificates.length}</span>
+          </button>
+          <button type="button" className={activeView === "chats" ? "selected" : ""} onClick={() => { setActiveView("chats"); setError(""); setNotice(""); }} aria-pressed={activeView === "chats"}>
+            <MessageSquareText size={16} /> AI chats <span>{chatTotal}</span>
           </button>
         </nav>
 
@@ -761,7 +897,64 @@ export default function DashboardClient({ allowLocalUploads }: { allowLocalUploa
         {error && <p className="dashboard-alert dashboard-alert-error" role="alert">{error}</p>}
         {notice && <p className="dashboard-alert dashboard-alert-success" role="status">{notice}</p>}
 
-        {activeView === "messages" ? <section className="dashboard-inbox" aria-label="Contact messages">
+        {activeView === "chats" ? (
+          <section className="space-y-4" aria-label="AI conversations">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div><p className="dashboard-eyebrow">PRIVATE USER CONVERSATIONS</p><h2 className="m-0 text-lg font-semibold text-neutral-800">{chatTotal} saved {chatTotal === 1 ? "chat" : "chats"}</h2></div>
+              <button className="dashboard-refresh" type="button" onClick={() => void loadChats(chatOffset)} disabled={isLoadingChats}><RefreshCw size={15} className={isLoadingChats ? "spinning" : ""} /> Refresh</button>
+            </div>
+            {isLoadingChats && chats.length === 0 ? (
+              <div className="dashboard-empty">Loading AI conversations…</div>
+            ) : chats.length === 0 ? (
+              <div className="dashboard-empty"><MessageSquareText size={23} /><strong>No saved AI conversations yet.</strong><span>Conversations appear here after users sign in and chat with the portfolio assistant.</span></div>
+            ) : (
+              <div className="grid gap-4 lg:grid-cols-[minmax(250px,.8fr)_minmax(0,1.2fr)]">
+                <aside className="max-h-[70vh] overflow-y-auto rounded-xl border border-neutral-200 bg-white shadow-sm" aria-label="Saved conversations">
+                  {chats.map((chat) => (
+                    <button
+                      key={chat.id}
+                      type="button"
+                      onClick={() => void loadChatDetail(chat.id)}
+                      aria-pressed={selectedChatId === chat.id}
+                      className={`block w-full border-b border-neutral-100 p-4 text-left transition last:border-b-0 hover:bg-amber-50/60 ${selectedChatId === chat.id ? "bg-amber-50" : "bg-white"}`}
+                    >
+                      <span className="flex items-start justify-between gap-2"><strong className="line-clamp-1 text-sm text-neutral-800">{chat.title}</strong><time className="shrink-0 text-[10px] text-neutral-500" dateTime={chat.updated_at}>{messageDate(chat.updated_at)}</time></span>
+                      <span className="mt-1 block text-xs text-neutral-600">{chat.account.full_name} <span className="text-neutral-400">@{chat.account.username}</span></span>
+                      <span className="mt-2 block line-clamp-2 text-xs leading-relaxed text-neutral-500">{chat.last_message || "No messages yet"}</span>
+                      <span className="mt-2 block font-[var(--font-mono)] text-[9px] uppercase tracking-wider text-neutral-400">{chat.message_count} messages</span>
+                    </button>
+                  ))}
+                </aside>
+                <article className="flex max-h-[70vh] min-h-[360px] flex-col overflow-hidden rounded-xl border border-neutral-200 bg-white shadow-sm" aria-label="Conversation details">
+                  {isLoadingChatDetail ? (
+                    <div className="grid flex-1 place-items-center text-sm text-neutral-500">Loading conversation…</div>
+                  ) : selectedChat ? (
+                    <>
+                      <header className="flex items-start justify-between gap-4 border-b border-neutral-200 p-4">
+                        <div className="min-w-0"><span className="font-[var(--font-mono)] text-[9px] uppercase tracking-wider text-neutral-400">CHAT / @{selectedChat.account.username}</span><h2 className="mb-1 mt-1 truncate text-base font-semibold text-neutral-800">{selectedChat.title}</h2><p className="m-0 truncate text-xs text-neutral-500">{selectedChat.account.full_name} · {selectedChat.account.email}</p></div>
+                        <button className="dashboard-delete inline-flex shrink-0 items-center gap-1" type="button" onClick={() => void deleteChat(selectedChat.id)}><Trash2 size={14} /> Delete</button>
+                      </header>
+                      <div className="flex-1 space-y-4 overflow-y-auto p-4">
+                        {selectedChat.messages.map((message) => (
+                          <div key={message.id} className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}>
+                            <div className={`max-w-[92%] rounded-2xl px-4 py-3 ${message.role === "user" ? "bg-neutral-800 text-white" : "bg-neutral-100 text-neutral-800"}`}>
+                              <p className="m-0 whitespace-pre-wrap break-words text-sm leading-relaxed">{message.content}</p>
+                              {message.sources.length > 0 && <div className="mt-3 border-t border-neutral-300/70 pt-2"><span className="font-[var(--font-mono)] text-[9px] uppercase tracking-wider text-neutral-500">Sources</span><ul className="mb-0 mt-1 space-y-1 pl-4">{message.sources.map((source) => <li key={source.url}><a href={source.url} target="_blank" rel="noreferrer" className="break-all text-xs text-amber-800 underline">{source.title}</a></li>)}</ul></div>}
+                              <time className={`mt-2 block text-right text-[9px] ${message.role === "user" ? "text-neutral-300" : "text-neutral-400"}`} dateTime={message.created_at}>{messageDate(message.created_at)}</time>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </>
+                  ) : (
+                    <div className="grid flex-1 place-items-center p-8 text-center text-sm text-neutral-500">Choose a saved conversation to review its messages.</div>
+                  )}
+                </article>
+              </div>
+            )}
+            {chatTotal > chatPageSize && <footer className="dashboard-pagination"><span>Page {Math.floor(chatOffset / chatPageSize) + 1} of {Math.ceil(chatTotal / chatPageSize)}</span><div><button type="button" onClick={() => void loadChats(Math.max(0, chatOffset - chatPageSize))} disabled={chatOffset === 0 || isLoadingChats}><ChevronLeft size={17} /> Previous</button><button type="button" onClick={() => void loadChats(chatOffset + chatPageSize)} disabled={chatOffset + chatPageSize >= chatTotal || isLoadingChats}>Next <ChevronRight size={17} /></button></div></footer>}
+          </section>
+        ) : activeView === "messages" ? <section className="dashboard-inbox" aria-label="Contact messages">
           <div className="dashboard-inbox-toolbar">
             <label className="dashboard-search">
               <span className="sr-only">Search messages on this page</span>
@@ -871,14 +1064,14 @@ export default function DashboardClient({ allowLocalUploads }: { allowLocalUploa
                     <small>Choose an upload or a hosted image link.</small>
                   </div>
                   <div className="dashboard-image-mode-switch" role="group" aria-label="Project image source">
-                    <button type="button" className={projectImageMode === "upload" ? "selected" : ""} onClick={() => setProjectImageMode("upload")} disabled={!allowLocalUploads}>
+                    <button type="button" className={projectImageMode === "upload" ? "selected" : ""} onClick={() => setProjectImageMode("upload")}>
                       <Upload size={14} /> Upload image
                     </button>
                     <button type="button" className={projectImageMode === "url" ? "selected" : ""} onClick={() => setProjectImageMode("url")}>
                       <Link2 size={14} /> Paste image URL
                     </button>
                   </div>
-                  {projectImageMode === "upload" && allowLocalUploads ? (
+                  {projectImageMode === "upload" ? (
                     <label className="dashboard-upload-zone" htmlFor="project-image-file" onDragOver={(event) => event.preventDefault()} onDrop={(event) => {
                       event.preventDefault();
                       chooseProjectImage(event.dataTransfer.files[0]);
@@ -894,8 +1087,6 @@ export default function DashboardClient({ allowLocalUploads }: { allowLocalUploa
                       </span>
                       {projectImageFile && <span className="dashboard-upload-ready">READY</span>}
                     </label>
-                  ) : projectImageMode === "upload" ? (
-                    <p className="dashboard-image-production-note">Local uploads are available during development. For production, paste a public HTTPS image URL.</p>
                   ) : (
                     <label className="dashboard-image-url-field">
                       <span>Public HTTPS image URL</span>
@@ -916,17 +1107,6 @@ export default function DashboardClient({ allowLocalUploads }: { allowLocalUploa
                     </div>
                   )}
                 </div>
-                <label>Card artwork<select value={projectDraft.visual} onChange={(event) => {
-                  const visual = event.target.value;
-                  if (visual === "game" || visual === "database" || visual === "archive" || visual === "network") {
-                    setProjectDraft((draft) => ({ ...draft, visual }));
-                  }
-                }}>
-                  <option value="game">Interactive / game</option>
-                  <option value="database">Backend / database</option>
-                  <option value="archive">Archive / web</option>
-                  <option value="network">AI / network</option>
-                </select></label>
               </div>
               <button className="dashboard-project-save" type="submit" disabled={isSavingProject}>
                 {editingProjectId === null ? <Plus size={16} /> : <Save size={16} />}
@@ -985,14 +1165,14 @@ export default function DashboardClient({ allowLocalUploads }: { allowLocalUploa
                     <small>Upload a file or use a hosted image link.</small>
                   </div>
                   <div className="dashboard-image-mode-switch" role="group" aria-label="Certificate image source">
-                    <button type="button" className={certificateImageMode === "upload" ? "selected" : ""} onClick={() => setCertificateImageMode("upload")} disabled={!allowLocalUploads}>
+                    <button type="button" className={certificateImageMode === "upload" ? "selected" : ""} onClick={() => setCertificateImageMode("upload")}>
                       <Upload size={14} /> Upload image
                     </button>
                     <button type="button" className={certificateImageMode === "url" ? "selected" : ""} onClick={() => setCertificateImageMode("url")}>
                       <Link2 size={14} /> Paste image URL
                     </button>
                   </div>
-                  {certificateImageMode === "upload" && allowLocalUploads ? (
+                  {certificateImageMode === "upload" ? (
                     <label className="dashboard-upload-zone" htmlFor="certificate-image-file" onDragOver={(event) => event.preventDefault()} onDrop={(event) => {
                       event.preventDefault();
                       chooseCertificateImage(event.dataTransfer.files[0]);
@@ -1008,8 +1188,6 @@ export default function DashboardClient({ allowLocalUploads }: { allowLocalUploa
                       </span>
                       {certificateImageFile && <span className="dashboard-upload-ready">READY</span>}
                     </label>
-                  ) : certificateImageMode === "upload" ? (
-                    <p className="dashboard-image-production-note">Local uploads are available during development. For production, paste a public HTTPS image URL.</p>
                   ) : (
                     <label className="dashboard-image-url-field">
                       <span>Public HTTPS image URL</span>

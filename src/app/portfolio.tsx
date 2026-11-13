@@ -2,7 +2,8 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useCallback, useEffect, useRef, useState, type FormEvent, type KeyboardEvent, type PointerEvent as ReactPointerEvent, type ReactNode } from "react";
+import AiChatWidget from "./ai-chat-widget";
+import { useCallback, useEffect, useRef, useState, type FormEvent, type KeyboardEvent, type ReactNode } from "react";
 import { ArrowDown, ArrowDownRight, ArrowLeft, ArrowRight, ArrowUpRight, Award, BrainCircuit, ChartNoAxesColumn, Check, Code2, Copy, Database, ExternalLink, FileText, Gamepad2, GitBranch, Mail, Menu, MoveUpRight, ShieldCheck, Smartphone, Send, X, type LucideIcon } from "lucide-react";
 import { FaGithub as Github, FaInstagram as Instagram, FaLinkedin as Linkedin, FaWhatsapp as WhatsApp } from "react-icons/fa6";
 import type { IconType } from "react-icons";
@@ -123,7 +124,6 @@ function isPortfolioCertificate(value: unknown): value is PortfolioCertificate {
     && "image" in value && typeof value.image === "string";
 }
 
-type ProjectVisual = "game" | "database" | "archive" | "network";
 type PortfolioProject = {
   id: number;
   sort_order: number;
@@ -134,7 +134,6 @@ type PortfolioProject = {
   stack: string[];
   repo: string;
   image: string;
-  visual: ProjectVisual;
 };
 
 const projects: PortfolioProject[] = [
@@ -149,7 +148,6 @@ const projects: PortfolioProject[] = [
     stack: ["Three.js", "Arduino", "JavaScript"],
     repo: "3D-Game-Arduino",
     image: "/projects/arduino-circuit.jpg",
-    visual: "game",
   },
   {
     id: 2,
@@ -162,7 +160,6 @@ const projects: PortfolioProject[] = [
     stack: ["FastAPI", "SQLAlchemy", "PostgreSQL"],
     repo: "Students_management_system_FastAPI",
     image: "/projects/student-analytics.jpg",
-    visual: "database",
   },
   {
     id: 3,
@@ -175,7 +172,6 @@ const projects: PortfolioProject[] = [
     stack: ["HTML", "Web"],
     repo: "2BAC-Archive-Web",
     image: "/projects/archive-library.jpg",
-    visual: "archive",
   },
   {
     id: 4,
@@ -188,7 +184,6 @@ const projects: PortfolioProject[] = [
     stack: ["Python", "LLMs", "Chroma"],
     repo: "LLM_VectorDBs",
     image: "/projects/ai-neural-network.jpg",
-    visual: "network",
   },
 ];
 
@@ -213,9 +208,7 @@ function isPortfolioProject(value: unknown): value is Omit<PortfolioProject, "nu
     && "repo" in project
     && typeof project.repo === "string"
     && "image" in project
-    && typeof project.image === "string"
-    && "visual" in project
-    && (project.visual === "game" || project.visual === "database" || project.visual === "archive" || project.visual === "network");
+    && typeof project.image === "string";
 }
 
 const skillPaths = [
@@ -749,54 +742,12 @@ function CertificateCarousel({ certificates: items }: { certificates: PortfolioC
   );
 }
 function ProjectCard({ project }: { project: PortfolioProject }) {
-  const cardRef = useRef<HTMLElement>(null);
-  const rotateX = useRef<((value: number) => void) | null>(null);
-  const rotateY = useRef<((value: number) => void) | null>(null);
-
-  useEffect(() => {
-    const card = cardRef.current;
-    if (!card) return;
-    gsap.set(card, { transformPerspective: 1100, transformOrigin: "center" });
-    rotateX.current = gsap.quickTo(card, "rotationX", { duration: 0.45, ease: "power3.out" });
-    rotateY.current = gsap.quickTo(card, "rotationY", { duration: 0.45, ease: "power3.out" });
-    return () => {
-      gsap.killTweensOf(card);
-    };
-  }, []);
-
-  const handlePointerMove = (event: ReactPointerEvent<HTMLElement>) => {
-    if (event.pointerType !== "mouse" || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-    const bounds = event.currentTarget.getBoundingClientRect();
-    const x = (event.clientX - bounds.left) / bounds.width;
-    const y = (event.clientY - bounds.top) / bounds.height;
-    rotateX.current?.((0.5 - y) * 5);
-    rotateY.current?.((x - 0.5) * 5);
-    event.currentTarget.style.setProperty("--pointer-x", `${x * 100}%`);
-    event.currentTarget.style.setProperty("--pointer-y", `${y * 100}%`);
-  };
-
-  const handlePointerLeave = (event: ReactPointerEvent<HTMLElement>) => {
-    rotateX.current?.(0);
-    rotateY.current?.(0);
-    event.currentTarget.style.setProperty("--pointer-x", "50%");
-    event.currentTarget.style.setProperty("--pointer-y", "50%");
-  };
-
   return (
-    <article
-      ref={cardRef}
-      className={`project-card project-${project.visual} reveal`}
-      onPointerMove={handlePointerMove}
-      onPointerLeave={handlePointerLeave}
-    >
-      <div className={`project-visual visual-${project.visual}`} aria-hidden="true">
+    <article className="project-card reveal">
+      <div className="project-visual" aria-hidden="true">
         <ProjectImage className="project-image" src={project.image} alt="" sizes="(max-width: 760px) 100vw, (max-width: 1100px) 50vw, 600px" />
         <span className="project-image-overlay" />
         <span className="visual-index">PROJECT / {project.number}</span>
-        {project.visual === "game" && <div className="visual-game-orbit"><span /><i /><b /></div>}
-        {project.visual === "database" && <div className="visual-database"><span /><span /><span /><span /></div>}
-        {project.visual === "archive" && <div className="visual-archive"><i>2</i><i>BAC</i><span>ARCHIVE<br />COMMUNITY<br />COLLECTION</span></div>}
-        {project.visual === "network" && <div className="visual-nodes">{Array.from({ length: 9 }, (_, index) => <i key={index} />)}</div>}
         <span className="visual-category">{project.category}</span>
       </div>
       <div className="project-info">
@@ -1430,6 +1381,7 @@ export default function Portfolio() {
           <a className="back-top" href="#home" aria-label="Return to top"><ArrowDown size={15} /></a>
         </div>
       </footer>
+      <AiChatWidget />
     </main>
   );
 }

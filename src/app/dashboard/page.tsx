@@ -7,7 +7,5 @@ export const metadata: Metadata = {
 };
 
 export default function DashboardPage() {
-  const allowLocalUploads =
-    process.env.NODE_ENV !== "production" && process.env.APP_ENV !== "production";
-  return <DashboardClient allowLocalUploads={allowLocalUploads} />;
+  return <DashboardClient />;
 }

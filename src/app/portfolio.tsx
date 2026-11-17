@@ -58,6 +58,7 @@ import ProjectImage from "./project-image";
 const links = [
   { label: "About", href: "#about" },
   { label: "Expertise", href: "#expertise" },
+  { label: "Certificates", href: "#certificates" },
   { label: "Projects", href: "#projects" },
   { label: "Journey", href: "#journey" },
   { label: "Contact", href: "#contact" },
@@ -384,136 +385,72 @@ function Label({ children }: { children: ReactNode }) {
 }
 
 function TechnologyCarousel() {
+  const wrapperRef = useRef<HTMLDivElement>(null);
   const viewportRef = useRef<HTMLDivElement>(null);
   const trackRef = useRef<HTMLDivElement>(null);
-  const activeIndexRef = useRef(0);
-  const [activeIndex, setActiveIndex] = useState(0);
-  const [isHovered, setIsHovered] = useState(false);
-  const [isFocused, setIsFocused] = useState(false);
 
-  const navigateTo = useCallback((index: number, direction: "next" | "previous" | "direct" = "direct", animate = true) => {
+  useEffect(() => {
+    const wrapper = wrapperRef.current;
     const viewport = viewportRef.current;
     const track = trackRef.current;
-    if (!viewport || !track) return;
+    if (!wrapper || !viewport || !track) return;
 
-    const nextIndex = (index + skillPaths.length) % skillPaths.length;
-    const previousIndex = activeIndexRef.current;
-    const isForwardWrap = direction === "next" && previousIndex === skillPaths.length - 1 && nextIndex === 0;
-    const isBackwardWrap = direction === "previous" && previousIndex === 0 && nextIndex === skillPaths.length - 1;
-    const slideIndex = isForwardWrap ? skillPaths.length + 1 : isBackwardWrap ? 0 : nextIndex + 1;
-    const slide = track.children.item(slideIndex);
-    if (!(slide instanceof HTMLElement)) return;
-
-    track.style.paddingInline = `${Math.max(0, (viewport.clientWidth - slide.offsetWidth) / 2)}px`;
-    const offset = slide.offsetLeft + slide.offsetWidth / 2 - viewport.clientWidth / 2;
-    activeIndexRef.current = nextIndex;
-    setActiveIndex(nextIndex);
-    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    gsap.killTweensOf(track);
-    if (!animate || reducedMotion) {
-      gsap.set(track, { x: -offset });
+    gsap.registerPlugin(ScrollTrigger);
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      viewport.classList.add("technology-scroll-static");
       return;
     }
 
-    gsap.to(track, {
-      x: -offset,
-      duration: 0.8,
-      ease: "power3.inOut",
-      overwrite: true,
-      onComplete: () => {
-        if (isForwardWrap || isBackwardWrap) {
-          const realSlide = track.children.item(nextIndex + 1);
-          if (realSlide instanceof HTMLElement) {
-            gsap.set(track, { x: -(realSlide.offsetLeft + realSlide.offsetWidth / 2 - viewport.clientWidth / 2) });
-          }
-        }
+    const getDistance = () => Math.max(1, Math.round(track.scrollWidth - viewport.clientWidth));
+
+    const tween = gsap.to(track, {
+      x: () => -getDistance(),
+      ease: "none",
+    });
+
+    const trigger = ScrollTrigger.create({
+      trigger: wrapper,
+      start: "top 96px",
+      end: () => `+=${getDistance()}`,
+      pin: true,
+      scrub: 1,
+      anticipatePin: 1,
+      animation: tween,
+      invalidateOnRefresh: true,
+      onUpdate: (self) => {
+        wrapper.style.setProperty("--tech-progress", String(self.progress));
       },
     });
+
+    const refreshTimer = window.setTimeout(() => ScrollTrigger.refresh(), 250);
+
+    return () => {
+      window.clearTimeout(refreshTimer);
+      trigger.kill();
+      tween.kill();
+    };
   }, []);
 
-  useEffect(() => {
-    const viewport = viewportRef.current;
-    const track = trackRef.current;
-    if (!viewport) return;
-
-    const observer = new ResizeObserver(() => navigateTo(activeIndexRef.current, "direct", false));
-    observer.observe(viewport);
-    return () => {
-      observer.disconnect();
-      if (track) gsap.killTweensOf(track);
-    };
-  }, [navigateTo]);
-
-  useEffect(() => {
-    if (isHovered || isFocused || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-    const timer = gsap.delayedCall(4.2, () => {
-      navigateTo((activeIndexRef.current + 1) % skillPaths.length, "next");
-    });
-    return () => {
-      timer.kill();
-    };
-  }, [activeIndex, isFocused, isHovered, navigateTo]);
-
-  const handleKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
-    if (event.key === "ArrowRight") {
-      event.preventDefault();
-      navigateTo(activeIndex + 1, "next");
-    } else if (event.key === "ArrowLeft") {
-      event.preventDefault();
-      navigateTo(activeIndex - 1, "previous");
-    }
-  };
-
   return (
-    <div
-      className="technology-carousel reveal"
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-      onFocusCapture={() => setIsFocused(true)}
-      onBlurCapture={(event) => {
-        const nextFocusedElement = event.relatedTarget;
-        if (!(nextFocusedElement instanceof Node) || !event.currentTarget.contains(nextFocusedElement)) {
-          setIsFocused(false);
-        }
-      }}
-    >
-      <div className="technology-carousel-toolbar">
-        <div className="technology-carousel-controls" aria-label="Technology carousel controls">
-          <button type="button" onClick={() => navigateTo(activeIndex - 1, "previous")} aria-label="Previous technology card">
-            <ArrowLeft size={17} aria-hidden="true" />
-          </button>
-          <button type="button" onClick={() => navigateTo(activeIndex + 1, "next")} aria-label="Next technology card">
-            <ArrowRight size={17} aria-hidden="true" />
-          </button>
-        </div>
-      </div>
-
+    <div className="technology-scroll" ref={wrapperRef}>
       <div
-        className="technology-carousel-viewport"
+        className="technology-scroll-viewport"
         ref={viewportRef}
         role="region"
         aria-label="Technology paths"
-        aria-roledescription="carousel"
-        tabIndex={0}
-        onKeyDown={handleKeyDown}
       >
-        <div className="technology-carousel-track" ref={trackRef}>
-          {[
-            { path: skillPaths[skillPaths.length - 1], clone: "leading" },
-            ...skillPaths.map((path) => ({ path, clone: undefined })),
-            { path: skillPaths[0], clone: "trailing" },
-          ].map(({ path, clone }) => (
+        <div className="technology-scroll-track" ref={trackRef}>
+          {skillPaths.map((path) => (
             <article
-              className={`technology-card${!clone && skillPaths[activeIndex] === path ? " is-active" : ""}`}
-              id={clone ? undefined : `path-${path.number}`}
-              key={clone ?? path.number}
-              aria-labelledby={clone ? undefined : `path-title-${path.number}`}
-              aria-hidden={Boolean(clone)}
+              className="technology-card"
+              id={`path-${path.number}`}
+              key={path.number}
+              aria-labelledby={`path-title-${path.number}`}
             >
               <div className="technology-card-heading">
                 <span className="technology-card-icon"><path.icon size={20} strokeWidth={1.7} aria-hidden="true" /></span>
                 <span className="technology-card-index">PATH / {path.number}</span>
-                <h3 id={clone ? undefined : `path-title-${path.number}`}>{path.name}</h3>
+                <h3 id={`path-title-${path.number}`}>{path.name}</h3>
                 <p>{path.description}</p>
               </div>
               <div className="technology-card-groups">
@@ -539,19 +476,7 @@ function TechnologyCarousel() {
           ))}
         </div>
       </div>
-
-      <div className="technology-carousel-pagination" role="group" aria-label="Choose a technology card">
-        {skillPaths.map((path, index) => (
-          <button
-            type="button"
-            className={index === activeIndex ? "active" : ""}
-            key={path.number}
-            onClick={() => navigateTo(index, "direct")}
-            aria-label={`Show ${path.name}`}
-            aria-current={index === activeIndex ? "step" : undefined}
-          />
-        ))}
-      </div>
+      <div className="technology-scroll-progress" aria-hidden="true"><span /></div>
     </div>
   );
 }
@@ -888,22 +813,7 @@ export default function Portfolio() {
 
   useEffect(() => {
     if (yearRef.current) yearRef.current.textContent = String(new Date().getFullYear());
-    let isTransitioningToAbout = false;
-    let hasEnteredAbout = false;
-    let snapInterrupted = false;
-    let snapHeroToAbout = () => {};
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 24);
-      const snapThreshold = Math.min(160, window.innerHeight * 0.2);
-      if (window.scrollY < 2 && !isTransitioningToAbout) {
-        hasEnteredAbout = false;
-        snapInterrupted = false;
-      } else if (snapInterrupted && window.scrollY > snapThreshold) {
-        snapInterrupted = false;
-        hasEnteredAbout = true;
-      }
-      snapHeroToAbout();
-    };
+    const handleScroll = () => setIsScrolled(window.scrollY > 24);
     handleScroll();
     window.addEventListener("scroll", handleScroll, { passive: true });
 
@@ -919,6 +829,8 @@ export default function Portfolio() {
           ease: "power3.out",
           delay: 0.15,
         });
+        gsap.from(".hero-portrait-image", { y: 70, opacity: 0, duration: 1.05, ease: "power3.out", clearProps: "transform,opacity" });
+        gsap.from(".hero-code-float", { opacity: 0, duration: 0.6, stagger: 0.05, ease: "power2.out", clearProps: "opacity" });
         gsap.utils.toArray<HTMLElement>(".reveal").forEach((element) => {
           gsap.fromTo(element, { y: 30, opacity: 0 }, {
             y: 0,
@@ -990,41 +902,70 @@ export default function Portfolio() {
     const scrollRoot = document.documentElement;
     const previousScrollBehavior = scrollRoot.style.scrollBehavior;
     let scrollTween: gsap.core.Tween | null = null;
-    const restoreScrollBehavior = () => {
-      scrollRoot.style.scrollBehavior = previousScrollBehavior;
-      isTransitioningToAbout = false;
+    let animating = false;
+    let lastY = window.scrollY;
+    let snapDirection = 0;
+    let snapTimer = 0;
+    let suppressUntil = 0;
+    const sectionTop = (element: HTMLElement) => element.getBoundingClientRect().top + window.scrollY;
+    const finishScroll = () => {
+      animating = false;
       scrollTween = null;
+      scrollRoot.style.scrollBehavior = previousScrollBehavior;
     };
-    const transitionToAbout = () => {
-      if (!aboutSection || hasEnteredAbout || reduceMotion) return;
-      hasEnteredAbout = true;
-      isTransitioningToAbout = true;
+    const animateTo = (targetY: number) => {
+      scrollTween?.kill();
       scrollRoot.style.scrollBehavior = "auto";
-      const aboutTop = aboutSection.getBoundingClientRect().top + window.scrollY;
+      if (reduceMotion) {
+        window.scrollTo(0, targetY);
+        finishScroll();
+        return;
+      }
+      animating = true;
       scrollTween = gsap.to(window, {
-        duration: 0.75,
-        ease: "power2.inOut",
-        scrollTo: {
-          y: aboutTop,
-          autoKill: true,
-        },
-        onComplete: () => {
-          window.scrollTo(0, aboutSection.getBoundingClientRect().top + window.scrollY);
-          restoreScrollBehavior();
-        },
-        onInterrupt: () => {
-          restoreScrollBehavior();
-          hasEnteredAbout = false;
-          snapInterrupted = true;
-        },
+        duration: 0.85,
+        ease: "power3.inOut",
+        scrollTo: { y: targetY, autoKill: true },
+        onComplete: finishScroll,
+        onInterrupt: finishScroll,
       });
     };
-    snapHeroToAbout = () => {
-      const snapThreshold = Math.min(160, window.innerHeight * 0.2);
-      if (!reduceMotion && !snapInterrupted && !isTransitioningToAbout && !hasEnteredAbout && window.scrollY > 2 && window.scrollY <= snapThreshold) {
-        transitionToAbout();
+    const runSnapCheck = () => {
+      if (animating || !aboutSection || snapDirection === 0) {
+        snapDirection = 0;
+        return;
+      }
+      if (performance.now() < suppressUntil) {
+        snapDirection = 0;
+        return;
+      }
+      const y = window.scrollY;
+      const aboutTop = sectionTop(aboutSection);
+      if (snapDirection > 0 && y > 24 && y < aboutTop - 8) {
+        animateTo(aboutTop);
+      } else if (snapDirection < 0 && y > aboutTop - 48 && y < aboutTop - 2) {
+        animateTo(0);
+      }
+      snapDirection = 0;
+    };
+    const handleSnapScroll = () => {
+      const y = window.scrollY;
+      const delta = y - lastY;
+      lastY = y;
+      if (delta > 0) snapDirection = 1;
+      else if (delta < 0) snapDirection = -1;
+      else return;
+      window.clearTimeout(snapTimer);
+      snapTimer = window.setTimeout(runSnapCheck, 140);
+    };
+    const handleAnchorClick = (event: MouseEvent) => {
+      const target = event.target;
+      if (target instanceof Element && target.closest('a[href^="#"]')) {
+        suppressUntil = performance.now() + 1000;
       }
     };
+    window.addEventListener("scroll", handleSnapScroll, { passive: true });
+    document.addEventListener("click", handleAnchorClick, true);
 
     const observer = new IntersectionObserver(
       (entries) => {
@@ -1037,6 +978,9 @@ export default function Portfolio() {
 
     return () => {
       window.removeEventListener("scroll", handleScroll);
+      window.removeEventListener("scroll", handleSnapScroll);
+      document.removeEventListener("click", handleAnchorClick, true);
+      window.clearTimeout(snapTimer);
       heroArt?.removeEventListener("pointermove", handleHeroPointerMove);
       heroArt?.removeEventListener("pointerleave", resetHeroPointer);
       scrollTween?.kill();
@@ -1308,7 +1252,7 @@ export default function Portfolio() {
                 <span><strong>GitHub</strong><small>Projects and code</small></span>
                 <ArrowUpRight size={15} aria-hidden="true" />
               </a>
-              <a className="contact-channel" href="https://instagram.com/ahmedbouramdane77" target="_blank" rel="noreferrer">
+              <a className="contact-channel" href="https://www.instagram.com/ahmed.bouramdane77" target="_blank" rel="noreferrer">
                 <span className="contact-channel-icon"><Instagram size={18} aria-hidden="true" /></span>
                 <span><strong>Instagram</strong><small>Follow along</small></span>
                 <ArrowUpRight size={15} aria-hidden="true" />
@@ -1328,11 +1272,11 @@ export default function Portfolio() {
             <div className="contact-form-fields">
               <label className="contact-field">
                 <span>Your name</span>
-                <input name="name" type="text" autoComplete="name" minLength={2} maxLength={100} placeholder="Jane Smith" required />
+                <input name="name" type="text" autoComplete="name" minLength={2} maxLength={100} placeholder="Ahmed Bouramdane" required />
               </label>
               <label className="contact-field">
                 <span>Email address</span>
-                <input name="email" type="email" autoComplete="email" maxLength={254} placeholder="jane@example.com" required />
+                <input name="email" type="email" autoComplete="email" maxLength={254} placeholder={contactEmail} required />
               </label>
               <label className="contact-field contact-field-full">
                 <span>What is this about?</span>
@@ -1377,7 +1321,7 @@ export default function Portfolio() {
         <div className="footer-links">
           <a href="https://github.com/ahmedbouramdane" target="_blank" rel="noreferrer">GitHub <ArrowUpRight size={13} /></a>
           <a href="https://linkedin.com/in/ahmedbouramdane" target="_blank" rel="noreferrer">LinkedIn <ArrowUpRight size={13} /></a>
-          <a href="https://instagram.com/ahmedbouramdane77" target="_blank" rel="noreferrer">Instagram <ArrowUpRight size={13} /></a>
+          <a href="https://www.instagram.com/ahmed.bouramdane77" target="_blank" rel="noreferrer">Instagram <ArrowUpRight size={13} /></a>
           <a className="back-top" href="#home" aria-label="Return to top"><ArrowDown size={15} /></a>
         </div>
       </footer>

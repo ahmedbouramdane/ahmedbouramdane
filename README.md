@@ -43,7 +43,7 @@
   <strong>CONNECT</strong><br/>
   <a href="https://github.com/ahmedbouramdane"><img src="https://img.shields.io/badge/GitHub-Profile-0D1117?style=flat&logo=github&logoColor=00FFE0" alt="GitHub profile"/></a>
   <a href="https://linkedin.com/in/ahmedbouramdane"><img src="https://img.shields.io/badge/LinkedIn-Connect-0D1117?style=flat&logo=linkedin&logoColor=0A66C2" alt="Connect on LinkedIn"/></a>
-  <a href="https://instagram.com/ahmedbouramdane77"><img src="https://img.shields.io/badge/Instagram-Follow-0D1117?style=flat&logo=instagram&logoColor=E4405F" alt="Follow on Instagram"/></a>
+  <a href="https://www.instagram.com/ahmed.bouramdane77"><img src="https://img.shields.io/badge/Instagram-Follow-0D1117?style=flat&logo=instagram&logoColor=E4405F" alt="Follow on Instagram"/></a>
 </p>
 
 <!-- ============ EXPLORE ============ -->
@@ -411,7 +411,7 @@ Have an opportunity, project idea, or question? Choose a channel below — I'd b
 
 <p align="center">
   <a href="https://github.com/ahmedbouramdane"><img src="https://img.shields.io/badge/GitHub-Explore%20my%20work-0D1117?style=for-the-badge&logo=github&logoColor=00FFE0" alt="Explore Ahmed's GitHub projects"/></a>
-  <a href="https://instagram.com/ahmedbouramdane77"><img src="https://img.shields.io/badge/Instagram-Follow%20along-0D1117?style=for-the-badge&logo=instagram&logoColor=E4405F" alt="Follow Ahmed on Instagram"/></a>
+  <a href="https://www.instagram.com/ahmed.bouramdane77"><img src="https://img.shields.io/badge/Instagram-Follow%20along-0D1117?style=for-the-badge&logo=instagram&logoColor=E4405F" alt="Follow Ahmed on Instagram"/></a>
 </p>
 
 <p align="center">

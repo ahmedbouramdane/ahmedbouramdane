@@ -4,7 +4,9 @@ const userCookieName = "portfolio_user_session";
 const maximumRegistrationBytes = 5 * 1024 * 1024 + 64 * 1024;
 const maximumImageBytes = 5 * 1024 * 1024;
 
-export async function readAccountRegistration(request: Request) {
+type MultipartResult = { formData: FormData } | { error: Response };
+
+async function readMultipartForm(request: Request): Promise<MultipartResult> {
   const contentType = request.headers.get("content-type") ?? "";
   if (!contentType.toLowerCase().startsWith("multipart/form-data;")) {
     return { error: Response.json({ detail: "Submit the account form as multipart form data." }, { status: 415 }) };
@@ -37,19 +39,25 @@ export async function readAccountRegistration(request: Request) {
     offset += chunk.byteLength;
   }
 
-  let formData: FormData;
   try {
-    formData = await new Request(request.url, {
+    const formData = await new Request(request.url, {
       method: "POST",
       headers: request.headers,
       body,
     }).formData();
+    return { formData };
   } catch (error) {
     if (error instanceof TypeError) {
       return { error: Response.json({ detail: "The account form could not be read." }, { status: 400 }) };
     }
     throw error;
   }
+}
+
+export async function readAccountRegistration(request: Request) {
+  const parsed = await readMultipartForm(request);
+  if ("error" in parsed) return parsed;
+  const { formData } = parsed;
 
   const expectedFields = new Set(["full_name", "username", "email", "password", "phone", "image"]);
   const fields = Array.from(formData.keys());
@@ -68,10 +76,32 @@ export async function readAccountRegistration(request: Request) {
   return { formData };
 }
 
+export async function readAccountProfile(request: Request) {
+  const parsed = await readMultipartForm(request);
+  if ("error" in parsed) return parsed;
+  const { formData } = parsed;
+
+  const expectedFields = new Set(["full_name", "email", "phone", "image"]);
+  const fields = Array.from(formData.keys());
+  if (fields.some((field) => !expectedFields.has(field))
+    || ["full_name", "email", "phone"].some((field) => {
+      const values = formData.getAll(field);
+      return values.length > 1 || (values.length === 1 && typeof values[0] !== "string");
+    })
+    || formData.getAll("image").length > 1) {
+    return { error: Response.json({ detail: "The profile form contains invalid fields." }, { status: 400 }) };
+  }
+  const image = formData.get("image");
+  if (image !== null && (typeof image === "string" || image.size > maximumImageBytes)) {
+    return { error: Response.json({ detail: "Choose an image file up to 5 MB." }, { status: 413 }) };
+  }
+  return { formData };
+}
+
 export async function forwardAccountRequest(
   request: Request,
   endpoint: string,
-  method: "GET" | "POST" | "DELETE",
+  method: "GET" | "POST" | "PATCH" | "DELETE",
   body?: string | FormData,
 ) {
   const headers = new Headers({ Accept: "application/json" });

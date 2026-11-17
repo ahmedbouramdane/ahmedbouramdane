@@ -1,4 +1,4 @@
-import { forwardAccountRequest, readAccountRegistration } from "../_lib";
+import { forwardAccountRequest, readAccountProfile, readAccountRegistration } from "../_lib";
 import { readJsonBody, rejectCrossOriginRequest } from "../../dashboard/_lib";
 
 type RouteContext = { params: Promise<{ segments: string[] }> };
@@ -27,10 +27,29 @@ export async function GET(request: Request, context: RouteContext) {
     return forwardAccountRequest(request, `/api/v1/account/username-availability?${query}`, "GET");
   }
   if (segments.length === 1 && segments[0] === "conversations") {
-    return forwardAccountRequest(request, "/api/v1/account/conversations", "GET");
+    const url = new URL(request.url);
+    const params = new URLSearchParams();
+    if (url.searchParams.has("limit")) params.set("limit", url.searchParams.get("limit")!);
+    if (url.searchParams.has("offset")) params.set("offset", url.searchParams.get("offset")!);
+    const qs = params.toString();
+    return forwardAccountRequest(request, `/api/v1/account/conversations${qs ? `?${qs}` : ""}`, "GET");
+  }
+  if (segments.length === 1 && segments[0] === "messages") {
+    const url = new URL(request.url);
+    const params = new URLSearchParams();
+    if (url.searchParams.has("limit")) params.set("limit", url.searchParams.get("limit")!);
+    if (url.searchParams.has("before")) params.set("before", url.searchParams.get("before")!);
+    const qs = params.toString();
+    return forwardAccountRequest(request, `/api/v1/account/messages${qs ? `?${qs}` : ""}`, "GET");
   }
   if (segments.length === 2 && segments[0] === "conversations" && isConversationId(segments[1])) {
-    return forwardAccountRequest(request, `/api/v1/account/conversations/${segments[1]}`, "GET");
+    const url = new URL(request.url);
+    const params = new URLSearchParams();
+    if (url.searchParams.has("limit")) params.set("limit", url.searchParams.get("limit")!);
+    if (url.searchParams.has("offset")) params.set("offset", url.searchParams.get("offset")!);
+    if (url.searchParams.has("before")) params.set("before", url.searchParams.get("before")!);
+    const qs = params.toString();
+    return forwardAccountRequest(request, `/api/v1/account/conversations/${segments[1]}${qs ? `?${qs}` : ""}`, "GET");
   }
   return noRoute();
 }
@@ -53,6 +72,24 @@ export async function POST(request: Request, context: RouteContext) {
   }
   if (segments[0] === "logout" || segments[0] === "conversations") {
     return forwardAccountRequest(request, `/api/v1/account/${segments[0]}`, "POST");
+  }
+  if (segments[0] === "messages") {
+    const parsed = await readJsonBody(request);
+    if ("error" in parsed) return parsed.error;
+    return forwardAccountRequest(request, "/api/v1/account/messages", "POST", parsed.body);
+  }
+  return noRoute();
+}
+
+export async function PATCH(request: Request, context: RouteContext) {
+  const originError = rejectCrossOriginRequest(request);
+  if (originError) return originError;
+
+  const segments = await getSegments(context);
+  if (segments.length === 1 && segments[0] === "profile") {
+    const parsed = await readAccountProfile(request);
+    if ("error" in parsed) return parsed.error;
+    return forwardAccountRequest(request, "/api/v1/account/profile", "PATCH", parsed.formData);
   }
   return noRoute();
 }

@@ -2,20 +2,21 @@ import { portfolioBackendUrl } from "../../_backend";
 
 type RouteContext = { params: Promise<{ imageId: string }> };
 const userCookieName = "portfolio_user_session";
+const adminCookieName = "portfolio_admin_session";
 
 export async function GET(request: Request, context: RouteContext) {
   const { imageId } = await context.params;
   if (!/^[A-Za-z0-9_-]{24,48}$/.test(imageId)) {
     return Response.json({ detail: "Image not found." }, { status: 404, headers: { "Cache-Control": "no-store" } });
   }
-  const cookie = request.headers.get("cookie")
+  const cookies = request.headers.get("cookie")
     ?.split(";")
     .map((part) => part.trim())
-    .find((part) => part.startsWith(`${userCookieName}=`));
+    .filter((part) => part.startsWith(`${userCookieName}=`) || part.startsWith(`${adminCookieName}=`)) ?? [];
 
   try {
     const backendResponse = await fetch(portfolioBackendUrl(`/api/v1/media/${imageId}`), {
-      headers: cookie ? { Cookie: cookie } : undefined,
+      headers: cookies.length > 0 ? { Cookie: cookies.join("; ") } : undefined,
       cache: "no-store",
       redirect: "error",
       signal: AbortSignal.timeout(10_000),

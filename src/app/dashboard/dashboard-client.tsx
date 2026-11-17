@@ -1,8 +1,39 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState, type FormEvent } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent, type KeyboardEvent } from "react";
 import Link from "next/link";
-import { ArrowDown, ArrowLeft, ArrowUp, Award, ChevronLeft, ChevronRight, FolderKanban, ImagePlus, Link2, LogOut, Mail, MailOpen, MessageSquareText, Pencil, Plus, RefreshCw, Save, Search, ShieldCheck, Trash2, Upload, X } from "lucide-react";
+import {
+  ArrowDown,
+  ArrowLeft,
+  ArrowUp,
+  Award,
+  Bot,
+  Check,
+  CheckCheck,
+  ChevronLeft,
+  ChevronRight,
+  FolderKanban,
+  ImagePlus,
+  Link2,
+  LoaderCircle,
+  LogOut,
+  Mail,
+  MailOpen,
+  MessageSquare,
+  MessageSquareText,
+  Pencil,
+  Plus,
+  RefreshCw,
+  Save,
+  Search,
+  Send,
+  ShieldCheck,
+  Sparkles,
+  Trash2,
+  Upload,
+  UserRound,
+  X,
+} from "lucide-react";
 import ProjectImage from "../project-image";
 
 type AdminSession = { username: string };
@@ -35,6 +66,44 @@ type AdminChatMessage = {
   created_at: string;
 };
 type AdminChatDetail = Omit<AdminChatSummary, "last_message" | "message_count"> & { messages: AdminChatMessage[] };
+
+type DirectInboxAccount = {
+  id: number;
+  full_name: string;
+  username: string;
+  email: string;
+  avatar_image: string | null;
+};
+type DirectInboxItem = {
+  account: DirectInboxAccount;
+  updated_at: string;
+  last_message: string;
+  last_sender_role: "user" | "admin" | "";
+  message_count: number;
+  unread_count: number;
+};
+type DirectInboxPage = {
+  items: DirectInboxItem[];
+  total: number;
+  unread_total: number;
+  limit: number;
+  offset: number;
+};
+type DirectThreadMessage = {
+  id: number;
+  sender_role: "user" | "admin";
+  content: string;
+  is_read: boolean;
+  created_at: string;
+};
+type DirectThreadDetail = {
+  account: DirectInboxAccount;
+  admin: { full_name: string; image: string };
+  thread: {
+    updated_at: string;
+    messages: DirectThreadMessage[];
+  };
+};
 type MessageFilter = "all" | "unread" | "read";
 type ManagedProject = {
   id: number;
@@ -170,6 +239,14 @@ function isAdminChatDetail(value: unknown): value is AdminChatDetail {
     && value.messages.every(isAdminChatMessage);
 }
 
+function isDirectInboxPage(value: unknown): value is DirectInboxPage {
+  return isRecord(value) && Array.isArray(value.items) && typeof value.total === "number";
+}
+
+function isDirectThreadDetail(value: unknown): value is DirectThreadDetail {
+  return isRecord(value) && isRecord(value.account) && isRecord(value.thread) && Array.isArray(value.thread.messages);
+}
+
 function isManagedProject(value: unknown): value is ManagedProject {
   if (typeof value !== "object" || value === null) return false;
   return "id" in value
@@ -261,6 +338,11 @@ function messageDate(value: string) {
   return Number.isNaN(date.getTime()) ? "Date unavailable" : date.toLocaleString();
 }
 
+function formatDate(value: string) {
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? "—" : date.toLocaleDateString([], { dateStyle: "medium" });
+}
+
 export default function DashboardClient() {
   const [username, setUsername] = useState("");
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -279,7 +361,7 @@ export default function DashboardClient() {
   const [selectedChatId, setSelectedChatId] = useState<string | null>(null);
   const [projects, setProjects] = useState<ManagedProject[]>([]);
   const [certificates, setCertificates] = useState<ManagedCertificate[]>([]);
-  const [activeView, setActiveView] = useState<"messages" | "projects" | "certificates" | "chats">("messages");
+  const [activeView, setActiveView] = useState<"messages" | "projects" | "certificates" | "chats" | "profile">("messages");
   const [projectDraft, setProjectDraft] = useState<ProjectDraft>(emptyProjectDraft);
   const [certificateDraft, setCertificateDraft] = useState<CertificateDraft>(emptyCertificateDraft);
   const [projectImageMode, setProjectImageMode] = useState<ProjectImageMode>("upload");
@@ -297,8 +379,29 @@ export default function DashboardClient() {
   const [selectedMessageId, setSelectedMessageId] = useState<number | null>(null);
   const [chatTotal, setChatTotal] = useState(0);
   const [chatOffset, setChatOffset] = useState(0);
+  const [chatMode, setChatMode] = useState<"direct" | "ai">("direct");
+  const [directInbox, setDirectInbox] = useState<DirectInboxItem[]>([]);
+  const [directInboxTotal, setDirectInboxTotal] = useState(0);
+  const [directInboxUnread, setDirectInboxUnread] = useState(0);
+  const [isLoadingDirectInbox, setIsLoadingDirectInbox] = useState(false);
+  const [selectedAccountId, setSelectedAccountId] = useState<number | null>(null);
+  const [selectedDirectThread, setSelectedDirectThread] = useState<DirectThreadDetail | null>(null);
+  const [isLoadingDirectThread, setIsLoadingDirectThread] = useState(false);
+  const [replyText, setReplyText] = useState("");
+  const [isSendingReply, setIsSendingReply] = useState(false);
+  const [directSearch, setDirectSearch] = useState("");
+  const directThreadEndRef = useRef<HTMLDivElement>(null);
   const [notice, setNotice] = useState("");
   const [error, setError] = useState("");
+
+  // Profile management state
+  const [profileName, setProfileName] = useState("");
+  const [profileEmail, setProfileEmail] = useState("");
+  const [profilePhone, setProfilePhone] = useState("");
+  const [profileAvatarFile, setProfileAvatarFile] = useState<File | null>(null);
+  const [profileAvatarPreview, setProfileAvatarPreview] = useState<string | null>(null);
+  const [isSavingProfile, setIsSavingProfile] = useState(false);
+  const profileFileRef = useRef<HTMLInputElement>(null);
 
   const loadMessages = useCallback(async (nextOffset: number) => {
     setIsLoadingMessages(true);
@@ -373,6 +476,90 @@ export default function DashboardClient() {
     } catch (requestError) {
       setError(requestError instanceof Error ? requestError.message : "The AI conversation could not be deleted.");
       if (requestError instanceof DashboardRequestError && requestError.status === 401) setIsAuthenticated(false);
+    }
+  };
+
+  const loadDirectInbox = useCallback(async (isPolling = false) => {
+    if (!isPolling) setIsLoadingDirectInbox(true);
+    try {
+      const payload = await dashboardRequest("/api/dashboard/inbox?limit=50&offset=0");
+      if (isDirectInboxPage(payload)) {
+        setDirectInbox(payload.items);
+        setDirectInboxTotal(payload.total);
+        setDirectInboxUnread(payload.unread_total);
+        setSelectedAccountId((current) => current ?? (payload.items.length > 0 ? payload.items[0].account.id : null));
+      }
+    } catch (requestError) {
+      if (!isPolling) {
+        setError(requestError instanceof Error ? requestError.message : "Direct inbox could not be loaded.");
+        if (requestError instanceof DashboardRequestError && requestError.status === 401) setIsAuthenticated(false);
+      }
+    } finally {
+      if (!isPolling) setIsLoadingDirectInbox(false);
+    }
+  }, []);
+
+  const loadDirectThread = useCallback(async (accountId: number, isPolling = false) => {
+    if (!isPolling) setIsLoadingDirectThread(true);
+    try {
+      const payload = await dashboardRequest(`/api/dashboard/inbox/${accountId}`);
+      if (isDirectThreadDetail(payload)) {
+        setSelectedDirectThread(payload);
+        setDirectInbox((current) =>
+          current.map((item) => (item.account.id === accountId ? { ...item, unread_count: 0 } : item))
+        );
+      }
+    } catch (requestError) {
+      if (!isPolling) {
+        setError(requestError instanceof Error ? requestError.message : "Conversation could not be loaded.");
+        if (requestError instanceof DashboardRequestError && requestError.status === 401) setIsAuthenticated(false);
+      }
+    } finally {
+      if (!isPolling) setIsLoadingDirectThread(false);
+    }
+  }, []);
+
+  const sendReply = async (event?: FormEvent) => {
+    if (event) event.preventDefault();
+    const text = replyText.trim();
+    if (!text || !selectedAccountId || isSendingReply) return;
+    setReplyText("");
+    setIsSendingReply(true);
+
+    const optimisticMsg: DirectThreadMessage = {
+      id: Date.now(),
+      sender_role: "admin",
+      content: text,
+      is_read: false,
+      created_at: new Date().toISOString(),
+    };
+
+    setSelectedDirectThread((current) =>
+      current
+        ? {
+            ...current,
+            thread: {
+              ...current.thread,
+              messages: [...current.thread.messages, optimisticMsg],
+            },
+          }
+        : null
+    );
+
+    try {
+      await dashboardRequest(`/api/dashboard/inbox/${selectedAccountId}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: text }),
+      });
+      void loadDirectThread(selectedAccountId, true);
+      void loadDirectInbox(true);
+    } catch (requestError) {
+      setError(requestError instanceof Error ? requestError.message : "Reply could not be sent.");
+      setReplyText(text);
+      if (requestError instanceof DashboardRequestError && requestError.status === 401) setIsAuthenticated(false);
+    } finally {
+      setIsSendingReply(false);
     }
   };
 
@@ -466,7 +653,7 @@ export default function DashboardClient() {
         if (!active) return;
         setUsername(payload.username);
         setIsAuthenticated(true);
-        await Promise.all([loadMessages(0), loadProjects(), loadCertificates(), loadChats(0)]);
+        await Promise.all([loadMessages(0), loadProjects(), loadCertificates(), loadChats(0), loadDirectInbox(false), loadProfile()]);
       } catch (requestError) {
         if (!active) return;
         setIsAuthenticated(false);
@@ -480,7 +667,32 @@ export default function DashboardClient() {
     return () => {
       active = false;
     };
-  }, [loadCertificates, loadChats, loadMessages, loadProjects]);
+  }, [loadCertificates, loadChats, loadDirectInbox, loadMessages, loadProjects]);
+
+  // Real-time polling for WhatsApp-style direct messaging
+  useEffect(() => {
+    if (!isAuthenticated || activeView !== "chats") return;
+    if (chatMode === "direct") {
+      void loadDirectInbox(true);
+      const timer = setInterval(() => {
+        void loadDirectInbox(true);
+      }, 3000);
+      return () => clearInterval(timer);
+    }
+  }, [isAuthenticated, activeView, chatMode, loadDirectInbox]);
+
+  useEffect(() => {
+    if (!isAuthenticated || activeView !== "chats" || chatMode !== "direct" || !selectedAccountId) return;
+    void loadDirectThread(selectedAccountId, false);
+    const timer = setInterval(() => {
+      void loadDirectThread(selectedAccountId, true);
+    }, 2500);
+    return () => clearInterval(timer);
+  }, [isAuthenticated, activeView, chatMode, selectedAccountId, loadDirectThread]);
+
+  useEffect(() => {
+    directThreadEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [selectedDirectThread?.thread.messages, isSendingReply]);
 
   const unreadCount = useMemo(() => messages.filter((message) => !message.is_read).length, [messages]);
   const visibleMessages = useMemo(() => {
@@ -827,6 +1039,78 @@ export default function DashboardClient() {
     }
   };
 
+  const saveProfile = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setError("");
+    setNotice("");
+    setIsSavingProfile(true);
+    try {
+      const data = new FormData();
+      data.set("full_name", profileName.trim());
+      if (profileEmail.trim()) data.set("email", profileEmail.trim());
+      if (profilePhone.trim()) data.set("phone", profilePhone.trim());
+      if (profileAvatarFile) data.set("image", profileAvatarFile);
+      const response = await fetch("/api/dashboard/profile", {
+        method: "PATCH",
+        body: data,
+        cache: "no-store",
+      });
+      const payload: unknown = await response.json();
+      if (!response.ok) {
+        const detail = isRecord(payload) && typeof payload.detail === "string" ? payload.detail : "";
+        throw new DashboardRequestError(detail || "Profile could not be updated.", response.status);
+      }
+      setProfileAvatarFile(null);
+      setProfileAvatarPreview(null);
+      if (profileFileRef.current) profileFileRef.current.value = "";
+      setNotice("Your profile has been updated.");
+    } catch (requestError) {
+      setError(requestError instanceof Error ? requestError.message : "Profile could not be updated.");
+      if (requestError instanceof DashboardRequestError && requestError.status === 401) setIsAuthenticated(false);
+    } finally {
+      setIsSavingProfile(false);
+    }
+  };
+
+  const chooseProfileAvatar = (file: File | undefined) => {
+    if (!file) return;
+    if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
+      setError("Choose a JPEG, PNG, or WebP image.");
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setError("Profile images must be 5 MB or smaller.");
+      return;
+    }
+    setError("");
+    setProfileAvatarFile(file);
+    setProfileAvatarPreview(URL.createObjectURL(file));
+  };
+
+  const loadProfile = useCallback(async () => {
+    try {
+      const response = await fetch("/api/dashboard/profile", {
+        method: "GET",
+        cache: "no-store",
+      });
+      if (!response.ok) return;
+      const payload: unknown = await response.json();
+      if (isRecord(payload) && isRecord(payload.account)) {
+        const acc = payload.account;
+        if (typeof acc.full_name === "string") setProfileName(acc.full_name);
+        if (typeof acc.email === "string") setProfileEmail(acc.email);
+        if (typeof acc.phone === "string") setProfilePhone(acc.phone);
+      }
+    } catch {
+      // Profile loading is non-critical — the admin may not have a user account
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!profileAvatarPreview) return;
+    return () => URL.revokeObjectURL(profileAvatarPreview);
+  }, [profileAvatarPreview]);
+
   if (isCheckingSession) {
     return <main className="dashboard-page"><div className="dashboard-loading">Checking private session…</div></main>;
   }
@@ -861,28 +1145,98 @@ export default function DashboardClient() {
     <main className="dashboard-page">
       <div className="dashboard-shell">
         <header className="dashboard-header">
-          <Link className="dashboard-home-link" href="/"><ArrowLeft size={15} /> Portfolio</Link>
-          <button className="dashboard-logout" type="button" onClick={handleLogout}><LogOut size={15} /> Sign out</button>
+          <Link className="dashboard-home-link" href="/">
+            <ArrowLeft size={15} className="text-[#d75e2e]" /> Portfolio
+          </Link>
+          <button className="dashboard-logout" type="button" onClick={handleLogout}>
+            <LogOut size={15} className="text-[#d75e2e]" /> Sign out
+          </button>
         </header>
 
         <section className="dashboard-heading">
           <p className="dashboard-eyebrow">PRIVATE DASHBOARD / {username}</p>
-          <h1>{activeView === "messages" ? "Messages" : activeView === "projects" ? "Projects" : activeView === "certificates" ? "Certificates" : "AI chats"}<span>.</span></h1>
-          <p>{activeView === "messages" ? "Review and manage messages sent through your portfolio." : activeView === "projects" ? "Edit the projects shown on your public portfolio." : activeView === "certificates" ? "Add, update, and arrange the credentials shown on your public portfolio." : "Review account details and manage saved AI conversations."}</p>
+          <h1>
+            {activeView === "messages"
+              ? "Messages"
+              : activeView === "projects"
+                ? "Projects"
+                : activeView === "certificates"
+                  ? "Certificates"
+                  : "User Chats"}
+            <span>.</span>
+          </h1>
+          <p>
+            {activeView === "messages"
+              ? "Review and manage contact messages sent through your portfolio."
+              : activeView === "projects"
+                ? "Edit the projects shown on your public portfolio."
+                : activeView === "certificates"
+                  ? "Add, update, and arrange the credentials shown on your public portfolio."
+                  : "Chat live with registered users in real time and review AI conversation logs."}
+          </p>
         </section>
 
         <nav className="dashboard-view-switch" aria-label="Dashboard sections">
-          <button type="button" className={activeView === "messages" ? "selected" : ""} onClick={() => { setActiveView("messages"); setError(""); setNotice(""); }} aria-pressed={activeView === "messages"}>
-            <Mail size={16} /> Messages <span>{total}</span>
+          <button
+            type="button"
+            className={activeView === "messages" ? "selected" : ""}
+            onClick={() => {
+              setActiveView("messages");
+              setError("");
+              setNotice("");
+            }}
+            aria-pressed={activeView === "messages"}
+          >
+            <Mail size={16} className={activeView === "messages" ? "text-[#d75e2e]" : "text-[#a1552a]"} /> Messages <span>{total}</span>
           </button>
-          <button type="button" className={activeView === "projects" ? "selected" : ""} onClick={() => { setActiveView("projects"); setError(""); setNotice(""); }} aria-pressed={activeView === "projects"}>
-            <FolderKanban size={16} /> Projects <span>{projects.length}</span>
+          <button
+            type="button"
+            className={activeView === "projects" ? "selected" : ""}
+            onClick={() => {
+              setActiveView("projects");
+              setError("");
+              setNotice("");
+            }}
+            aria-pressed={activeView === "projects"}
+          >
+            <FolderKanban size={16} className={activeView === "projects" ? "text-[#d75e2e]" : "text-[#a1552a]"} /> Projects <span>{projects.length}</span>
           </button>
-          <button type="button" className={activeView === "certificates" ? "selected" : ""} onClick={() => { setActiveView("certificates"); setError(""); setNotice(""); }} aria-pressed={activeView === "certificates"}>
-            <Award size={16} /> Certificates <span>{certificates.length}</span>
+          <button
+            type="button"
+            className={activeView === "certificates" ? "selected" : ""}
+            onClick={() => {
+              setActiveView("certificates");
+              setError("");
+              setNotice("");
+            }}
+            aria-pressed={activeView === "certificates"}
+          >
+            <Award size={16} className={activeView === "certificates" ? "text-[#d75e2e]" : "text-[#a1552a]"} /> Certificates <span>{certificates.length}</span>
           </button>
-          <button type="button" className={activeView === "chats" ? "selected" : ""} onClick={() => { setActiveView("chats"); setError(""); setNotice(""); }} aria-pressed={activeView === "chats"}>
-            <MessageSquareText size={16} /> AI chats <span>{chatTotal}</span>
+          <button
+            type="button"
+            className={activeView === "chats" ? "selected" : ""}
+            onClick={() => {
+              setActiveView("chats");
+              setError("");
+              setNotice("");
+            }}
+            aria-pressed={activeView === "chats"}
+          >
+            <MessageSquare size={16} className={activeView === "chats" ? "text-[#d75e2e]" : "text-[#a1552a]"} /> Live Chats{" "}
+            <span>{directInboxUnread > 0 ? directInboxUnread : directInboxTotal}</span>
+          </button>
+          <button
+            type="button"
+            className={activeView === "profile" ? "selected" : ""}
+            onClick={() => {
+              setActiveView("profile");
+              setError("");
+              setNotice("");
+            }}
+            aria-pressed={activeView === "profile"}
+          >
+            <UserRound size={16} className={activeView === "profile" ? "text-[#d75e2e]" : "text-[#a1552a]"} /> Profile
           </button>
         </nav>
 
@@ -898,67 +1252,505 @@ export default function DashboardClient() {
         {notice && <p className="dashboard-alert dashboard-alert-success" role="status">{notice}</p>}
 
         {activeView === "chats" ? (
-          <section className="space-y-4" aria-label="AI conversations">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <div><p className="dashboard-eyebrow">PRIVATE USER CONVERSATIONS</p><h2 className="m-0 text-lg font-semibold text-neutral-800">{chatTotal} saved {chatTotal === 1 ? "chat" : "chats"}</h2></div>
-              <button className="dashboard-refresh" type="button" onClick={() => void loadChats(chatOffset)} disabled={isLoadingChats}><RefreshCw size={15} className={isLoadingChats ? "spinning" : ""} /> Refresh</button>
+          <section className="space-y-4" aria-label="User communication & chats">
+            {/* Chats Sub-Nav: Live WhatsApp Chat vs AI Assistant Logs */}
+            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#ece2d5] pb-3">
+              <div className="flex items-center gap-2 rounded-2xl border border-[#e4d8c7] bg-[#f0e6d6]/70 p-1">
+                <button
+                  type="button"
+                  onClick={() => setChatMode("direct")}
+                  className={`inline-flex items-center gap-2 rounded-xl px-3.5 py-1.5 text-xs font-semibold transition ${
+                    chatMode === "direct"
+                      ? "bg-white text-[#231d17] shadow-xs"
+                      : "text-[#786a57] hover:text-[#231d17]"
+                  }`}
+                >
+                  <MessageSquare size={14} className="text-[#d75e2e]" />
+                  Live User Chats (WhatsApp Style)
+                  {directInboxUnread > 0 && (
+                    <span className="rounded-full bg-[#d75e2e] px-1.5 py-0.2 font-[var(--font-mono)] text-[10px] font-bold text-white">
+                      {directInboxUnread}
+                    </span>
+                  )}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setChatMode("ai");
+                    void loadChats(0);
+                  }}
+                  className={`inline-flex items-center gap-2 rounded-xl px-3.5 py-1.5 text-xs font-semibold transition ${
+                    chatMode === "ai"
+                      ? "bg-white text-[#231d17] shadow-xs"
+                      : "text-[#786a57] hover:text-[#231d17]"
+                  }`}
+                >
+                  <Bot size={14} className="text-[#a1552a]" />
+                  AI Assistant Logs ({chatTotal})
+                </button>
+              </div>
+
+              <button
+                className="dashboard-refresh"
+                type="button"
+                onClick={() => {
+                  if (chatMode === "direct") {
+                    void loadDirectInbox(false);
+                    if (selectedAccountId) void loadDirectThread(selectedAccountId, false);
+                  } else {
+                    void loadChats(chatOffset);
+                  }
+                }}
+                disabled={isLoadingChats || isLoadingDirectInbox}
+              >
+                <RefreshCw
+                  size={14}
+                  className={`text-[#d75e2e] ${isLoadingChats || isLoadingDirectInbox ? "spinning" : ""}`}
+                />{" "}
+                Refresh
+              </button>
             </div>
-            {isLoadingChats && chats.length === 0 ? (
-              <div className="dashboard-empty">Loading AI conversations…</div>
-            ) : chats.length === 0 ? (
-              <div className="dashboard-empty"><MessageSquareText size={23} /><strong>No saved AI conversations yet.</strong><span>Conversations appear here after users sign in and chat with the portfolio assistant.</span></div>
-            ) : (
-              <div className="grid gap-4 lg:grid-cols-[minmax(250px,.8fr)_minmax(0,1.2fr)]">
-                <aside className="max-h-[70vh] overflow-y-auto rounded-xl border border-neutral-200 bg-white shadow-sm" aria-label="Saved conversations">
-                  {chats.map((chat) => (
-                    <button
-                      key={chat.id}
-                      type="button"
-                      onClick={() => void loadChatDetail(chat.id)}
-                      aria-pressed={selectedChatId === chat.id}
-                      className={`block w-full border-b border-neutral-100 p-4 text-left transition last:border-b-0 hover:bg-amber-50/60 ${selectedChatId === chat.id ? "bg-amber-50" : "bg-white"}`}
-                    >
-                      <span className="flex items-start justify-between gap-2"><strong className="line-clamp-1 text-sm text-neutral-800">{chat.title}</strong><time className="shrink-0 text-[10px] text-neutral-500" dateTime={chat.updated_at}>{messageDate(chat.updated_at)}</time></span>
-                      <span className="mt-1 block text-xs text-neutral-600">{chat.account.full_name} <span className="text-neutral-400">@{chat.account.username}</span></span>
-                      <span className="mt-2 block line-clamp-2 text-xs leading-relaxed text-neutral-500">{chat.last_message || "No messages yet"}</span>
-                      <span className="mt-2 block font-[var(--font-mono)] text-[9px] uppercase tracking-wider text-neutral-400">{chat.message_count} messages</span>
-                    </button>
-                  ))}
-                </aside>
-                <article className="flex max-h-[70vh] min-h-[360px] flex-col overflow-hidden rounded-xl border border-neutral-200 bg-white shadow-sm" aria-label="Conversation details">
-                  {isLoadingChatDetail ? (
-                    <div className="grid flex-1 place-items-center text-sm text-neutral-500">Loading conversation…</div>
-                  ) : selectedChat ? (
-                    <>
-                      <header className="flex items-start justify-between gap-4 border-b border-neutral-200 p-4">
-                        <div className="min-w-0"><span className="font-[var(--font-mono)] text-[9px] uppercase tracking-wider text-neutral-400">CHAT / @{selectedChat.account.username}</span><h2 className="mb-1 mt-1 truncate text-base font-semibold text-neutral-800">{selectedChat.title}</h2><p className="m-0 truncate text-xs text-neutral-500">{selectedChat.account.full_name} · {selectedChat.account.email}</p></div>
-                        <button className="dashboard-delete inline-flex shrink-0 items-center gap-1" type="button" onClick={() => void deleteChat(selectedChat.id)}><Trash2 size={14} /> Delete</button>
-                      </header>
-                      <div className="flex-1 space-y-4 overflow-y-auto p-4">
-                        {selectedChat.messages.map((message) => (
-                          <div key={message.id} className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}>
-                            <div className={`max-w-[92%] rounded-2xl px-4 py-3 ${message.role === "user" ? "bg-neutral-800 text-white" : "bg-neutral-100 text-neutral-800"}`}>
-                              <p className="m-0 whitespace-pre-wrap break-words text-sm leading-relaxed">{message.content}</p>
-                              {message.sources.length > 0 && <div className="mt-3 border-t border-neutral-300/70 pt-2"><span className="font-[var(--font-mono)] text-[9px] uppercase tracking-wider text-neutral-500">Sources</span><ul className="mb-0 mt-1 space-y-1 pl-4">{message.sources.map((source) => <li key={source.url}><a href={source.url} target="_blank" rel="noreferrer" className="break-all text-xs text-amber-800 underline">{source.title}</a></li>)}</ul></div>}
-                              <time className={`mt-2 block text-right text-[9px] ${message.role === "user" ? "text-neutral-300" : "text-neutral-400"}`} dateTime={message.created_at}>{messageDate(message.created_at)}</time>
-                            </div>
-                          </div>
-                        ))}
+
+            {/* MODE 1: LIVE WHATSAPP-STYLE DIRECT CHAT */}
+            {chatMode === "direct" ? (
+              <div className="grid min-h-[560px] gap-4 lg:grid-cols-[minmax(280px,0.85fr)_minmax(0,1.15fr)]">
+                {/* User Conversations List */}
+                <aside className="flex max-h-[72vh] flex-col overflow-hidden rounded-2xl border border-[#e4d8c7] bg-[#fffdfa] shadow-xs">
+                  {/* Search Bar */}
+                  <div className="border-b border-[#ece2d5] p-3">
+                    <div className="flex items-center gap-2 rounded-xl border border-[#e4d8c7] bg-[#fbf5e9] px-3 py-1.5">
+                      <Search size={14} className="text-[#d75e2e]" />
+                      <input
+                        type="text"
+                        value={directSearch}
+                        onChange={(e) => setDirectSearch(e.target.value)}
+                        placeholder="Search user name or handle…"
+                        className="w-full bg-transparent text-xs text-[#231d17] outline-none placeholder:text-[#948471]"
+                      />
+                      {directSearch && (
+                        <button
+                          type="button"
+                          onClick={() => setDirectSearch("")}
+                          className="text-[#948471] hover:text-[#231d17]"
+                        >
+                          <X size={13} />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Conversations Scrollable List */}
+                  <div className="min-h-0 flex-1 overflow-y-auto">
+                    {isLoadingDirectInbox && directInbox.length === 0 ? (
+                      <div className="p-8 text-center text-xs text-[#786a57]">
+                        <LoaderCircle size={18} className="mx-auto mb-2 animate-spin text-[#d75e2e]" />
+                        Loading conversations…
                       </div>
+                    ) : directInbox.length === 0 ? (
+                      <div className="p-8 text-center text-xs text-[#786a57]">
+                        <MessageSquare size={24} className="mx-auto mb-2 text-[#d75e2e]/60" />
+                        <strong>No direct user messages yet.</strong>
+                        <p className="mt-1 text-[11px]">
+                          When visitors message you from their account, their chats will appear here in real time.
+                        </p>
+                      </div>
+                    ) : (
+                      directInbox
+                        .filter((item) => {
+                          if (!directSearch.trim()) return true;
+                          const q = directSearch.toLowerCase();
+                          return (
+                            item.account.full_name.toLowerCase().includes(q) ||
+                            item.account.username.toLowerCase().includes(q) ||
+                            item.last_message.toLowerCase().includes(q)
+                          );
+                        })
+                        .map((item) => {
+                          const isSelected = selectedAccountId === item.account.id;
+                          return (
+                            <button
+                              key={item.account.id}
+                              type="button"
+                              onClick={() => void loadDirectThread(item.account.id, false)}
+                              aria-pressed={isSelected}
+                              className={`flex w-full items-start gap-3 border-b border-[#f0e6d6] p-3.5 text-left transition ${
+                                isSelected ? "bg-[#f5ecdd] border-l-4 border-l-[#d75e2e]" : "hover:bg-[#faf4e8]"
+                              }`}
+                            >
+                              <div className="grid size-10 shrink-0 place-items-center overflow-hidden rounded-full border border-[#e2d5c3] bg-[#fbf5e9] text-[#786a57]">
+                                {item.account.avatar_image ? (
+                                  <ProjectImage
+                                    src={item.account.avatar_image}
+                                    alt={item.account.full_name}
+                                    className="size-full object-cover"
+                                    sizes="40px"
+                                  />
+                                ) : (
+                                  <UserRound size={20} />
+                                )}
+                              </div>
+                              <div className="min-w-0 flex-1">
+                                <div className="flex items-center justify-between gap-1">
+                                  <strong className="truncate text-xs font-semibold text-[#231d17]">
+                                    {item.account.full_name}
+                                  </strong>
+                                  <time
+                                    className="shrink-0 font-[var(--font-mono)] text-[9px] text-[#948471]"
+                                    dateTime={item.updated_at}
+                                  >
+                                    {formatDate(item.updated_at)}
+                                  </time>
+                                </div>
+                                <p className="m-0 truncate font-[var(--font-mono)] text-[10px] text-[#a1552a]">
+                                  @{item.account.username}
+                                </p>
+                                <p className="mt-1 line-clamp-1 text-xs text-[#786a57]">
+                                  {item.last_sender_role === "admin" && (
+                                    <span className="font-semibold text-[#231d17]">You: </span>
+                                  )}
+                                  {item.last_message || "No messages yet"}
+                                </p>
+                              </div>
+                              {item.unread_count > 0 && (
+                                <span className="grid size-5 shrink-0 place-items-center rounded-full bg-[#d75e2e] text-[10px] font-bold text-white shadow-xs">
+                                  {item.unread_count}
+                                </span>
+                              )}
+                            </button>
+                          );
+                        })
+                    )}
+                  </div>
+                </aside>
+
+                {/* WhatsApp Chat Canvas */}
+                <article className="flex max-h-[72vh] flex-col overflow-hidden rounded-2xl border border-[#e4d8c7] bg-[#fffdfa] shadow-xs">
+                  {isLoadingDirectThread && !selectedDirectThread ? (
+                    <div className="grid flex-1 place-items-center text-xs text-[#786a57]">
+                      <span className="flex items-center gap-2">
+                        <LoaderCircle size={18} className="animate-spin text-[#d75e2e]" /> Loading
+                        conversation…
+                      </span>
+                    </div>
+                  ) : selectedDirectThread ? (
+                    <>
+                      {/* Chat Header */}
+                      <header className="flex items-center justify-between border-b border-[#ece2d5] bg-[#fffdfa] px-4 py-3">
+                        <div className="flex items-center gap-3">
+                          <div className="grid size-10 shrink-0 place-items-center overflow-hidden rounded-full border border-[#e2d5c3] bg-[#fbf5e9]">
+                            {selectedDirectThread.account.avatar_image ? (
+                              <ProjectImage
+                                src={selectedDirectThread.account.avatar_image}
+                                alt={selectedDirectThread.account.full_name}
+                                className="size-full object-cover"
+                                sizes="40px"
+                              />
+                            ) : (
+                              <UserRound size={20} className="text-[#786a57]" />
+                            )}
+                          </div>
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <h3 className="m-0 text-sm font-bold text-[#231d17]">
+                                {selectedDirectThread.account.full_name}
+                              </h3>
+                              <span className="rounded-full bg-[#e8f5e9] px-2 py-0.5 text-[9px] font-semibold text-[#1e7e34]">
+                                Live Chat
+                              </span>
+                            </div>
+                            <p className="m-0 font-[var(--font-mono)] text-[10px] text-[#786a57]">
+                              @{selectedDirectThread.account.username} · {selectedDirectThread.account.email}
+                            </p>
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (selectedAccountId) void loadDirectThread(selectedAccountId, false);
+                          }}
+                          className="inline-flex items-center gap-1 rounded-lg border border-[#e2d5c3] bg-white px-2.5 py-1 text-xs text-[#2b241b] shadow-xs transition hover:bg-[#fbf5e9]"
+                        >
+                          <RefreshCw size={12} className="text-[#d75e2e]" /> Sync
+                        </button>
+                      </header>
+
+                      {/* WhatsApp Messages Stream */}
+                      <div className="min-h-0 flex-1 space-y-3 overflow-y-auto bg-[#faf7f2] p-4">
+                        {selectedDirectThread.thread.messages.length === 0 ? (
+                          <div className="grid h-full place-items-center text-center text-xs text-[#786a57]">
+                            <p>No messages in this conversation yet. Send the first message below!</p>
+                          </div>
+                        ) : (
+                          selectedDirectThread.thread.messages.map((msg) => {
+                            const isAdmin = msg.sender_role === "admin";
+                            return (
+                              <div
+                                key={msg.id}
+                                className={`flex ${isAdmin ? "justify-end" : "justify-start"}`}
+                              >
+                                <div
+                                  className={`max-w-[80%] rounded-2xl px-4 py-2.5 text-xs leading-relaxed sm:text-sm ${
+                                    isAdmin
+                                      ? "rounded-tr-sm bg-[#d75e2e] text-[#faf6f0] shadow-sm"
+                                      : "rounded-tl-sm border border-[#e8dfd3] bg-white text-[#2b241b] shadow-xs"
+                                  }`}
+                                >
+                                  <div className="mb-1 flex items-center justify-between gap-3">
+                                    <span
+                                      className={`font-semibold ${
+                                        isAdmin ? "text-[#e2a72e]" : "text-[#d75e2e]"
+                                      }`}
+                                    >
+                                      {isAdmin ? "You (Ahmed)" : selectedDirectThread.account.full_name}
+                                    </span>
+                                  </div>
+                                  <p className="m-0 whitespace-pre-wrap break-words">{msg.content}</p>
+                                  <div
+                                    className={`mt-1.5 flex items-center justify-end gap-1 font-[var(--font-mono)] text-[9px] ${
+                                      isAdmin ? "text-neutral-400" : "text-[#948471]"
+                                    }`}
+                                  >
+                                    <time dateTime={msg.created_at}>{formatDate(msg.created_at)}</time>
+                                    {isAdmin && (
+                                      <CheckCheck
+                                        size={12}
+                                        className={msg.is_read ? "text-[#34d399]" : "text-neutral-400"}
+                                      />
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          })
+                        )}
+                        <div ref={directThreadEndRef} />
+                      </div>
+
+                      {/* WhatsApp-style Input Composer */}
+                      <form
+                        onSubmit={sendReply}
+                        className="border-t border-[#ece2d5] bg-[#fffdfa] p-3"
+                      >
+                        <div className="flex items-end gap-2 rounded-2xl border border-[#e4d8c7] bg-[#fbf5e9]/70 p-2 transition focus-within:border-[#d75e2e] focus-within:bg-white focus-within:ring-3 focus-within:ring-[#d75e2e]/10">
+                          <textarea
+                            value={replyText}
+                            onChange={(e) => setReplyText(e.target.value)}
+                            onKeyDown={(e: KeyboardEvent<HTMLTextAreaElement>) => {
+                              if (e.key === "Enter" && !e.shiftKey) {
+                                e.preventDefault();
+                                void sendReply();
+                              }
+                            }}
+                            rows={1}
+                            placeholder={`Reply to ${selectedDirectThread.account.full_name}… (Press Enter to send)`}
+                            className="max-h-28 min-h-10 flex-1 resize-y bg-transparent px-2.5 py-2 text-xs leading-relaxed text-[#231d17] outline-none placeholder:text-[#948471] sm:text-sm"
+                            disabled={isSendingReply}
+                          />
+                          <button
+                            type="submit"
+                            disabled={!replyText.trim() || isSendingReply}
+                            className="grid size-10 shrink-0 place-items-center rounded-xl bg-[#d75e2e] text-[#faf5ee] shadow-xs transition hover:bg-[#c24f24] disabled:cursor-not-allowed disabled:opacity-40"
+                            aria-label="Send reply"
+                          >
+                            {isSendingReply ? (
+                              <LoaderCircle size={16} className="animate-spin" />
+                            ) : (
+                              <Send size={15} />
+                            )}
+                          </button>
+                        </div>
+                      </form>
                     </>
                   ) : (
-                    <div className="grid flex-1 place-items-center p-8 text-center text-sm text-neutral-500">Choose a saved conversation to review its messages.</div>
+                    <div className="grid flex-1 place-items-center p-8 text-center text-xs text-[#786a57]">
+                      <MessageSquare size={32} className="mx-auto mb-2 text-[#d75e2e]/60" />
+                      <strong>Select a conversation on the left to start chatting in real time.</strong>
+                    </div>
                   )}
                 </article>
               </div>
+            ) : (
+              /* MODE 2: AI ASSISTANT CONVERSATION LOGS */
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="dashboard-eyebrow">AI BOT CHAT ARCHIVE</p>
+                    <h2 className="m-0 text-base font-semibold text-neutral-800">
+                      {chatTotal} saved AI {chatTotal === 1 ? "conversation" : "conversations"}
+                    </h2>
+                  </div>
+                </div>
+
+                {isLoadingChats && chats.length === 0 ? (
+                  <div className="dashboard-empty">Loading AI conversations…</div>
+                ) : chats.length === 0 ? (
+                  <div className="dashboard-empty">
+                    <MessageSquareText size={23} className="text-[#d75e2e]" />
+                    <strong>No saved AI conversations yet.</strong>
+                    <span>Conversations appear here after users chat with the AI assistant.</span>
+                  </div>
+                ) : (
+                  <div className="grid gap-4 lg:grid-cols-[minmax(250px,.8fr)_minmax(0,1.2fr)]">
+                    <aside
+                      className="max-h-[70vh] overflow-y-auto rounded-xl border border-neutral-200 bg-white shadow-sm"
+                      aria-label="Saved conversations"
+                    >
+                      {chats.map((chat) => (
+                        <button
+                          key={chat.id}
+                          type="button"
+                          onClick={() => void loadChatDetail(chat.id)}
+                          aria-pressed={selectedChatId === chat.id}
+                          className={`block w-full border-b border-neutral-100 p-4 text-left transition last:border-b-0 hover:bg-amber-50/60 ${
+                            selectedChatId === chat.id ? "bg-amber-50" : "bg-white"
+                          }`}
+                        >
+                          <span className="flex items-start justify-between gap-2">
+                            <strong className="line-clamp-1 text-sm text-neutral-800">
+                              {chat.title}
+                            </strong>
+                            <time
+                              className="shrink-0 text-[10px] text-neutral-500"
+                              dateTime={chat.updated_at}
+                            >
+                              {messageDate(chat.updated_at)}
+                            </time>
+                          </span>
+                          <span className="mt-1 block text-xs text-neutral-600">
+                            {chat.account.full_name}{" "}
+                            <span className="text-neutral-400">@{chat.account.username}</span>
+                          </span>
+                          <span className="mt-2 block line-clamp-2 text-xs leading-relaxed text-neutral-500">
+                            {chat.last_message || "No messages yet"}
+                          </span>
+                          <span className="mt-2 block font-[var(--font-mono)] text-[9px] uppercase tracking-wider text-neutral-400">
+                            {chat.message_count} messages
+                          </span>
+                        </button>
+                      ))}
+                    </aside>
+                    <article
+                      className="flex max-h-[70vh] min-h-[360px] flex-col overflow-hidden rounded-xl border border-neutral-200 bg-white shadow-sm"
+                      aria-label="Conversation details"
+                    >
+                      {isLoadingChatDetail ? (
+                        <div className="grid flex-1 place-items-center text-sm text-neutral-500">
+                          Loading conversation…
+                        </div>
+                      ) : selectedChat ? (
+                        <>
+                          <header className="flex items-start justify-between gap-4 border-b border-neutral-200 p-4">
+                            <div className="min-w-0">
+                              <span className="font-[var(--font-mono)] text-[9px] uppercase tracking-wider text-neutral-400">
+                                CHAT / @{selectedChat.account.username}
+                              </span>
+                              <h2 className="mb-1 mt-1 truncate text-base font-semibold text-neutral-800">
+                                {selectedChat.title}
+                              </h2>
+                              <p className="m-0 truncate text-xs text-neutral-500">
+                                {selectedChat.account.full_name} · {selectedChat.account.email}
+                              </p>
+                            </div>
+                            <button
+                              className="dashboard-delete inline-flex shrink-0 items-center gap-1"
+                              type="button"
+                              onClick={() => void deleteChat(selectedChat.id)}
+                            >
+                              <Trash2 size={14} className="text-red-500" /> Delete
+                            </button>
+                          </header>
+                          <div className="flex-1 space-y-4 overflow-y-auto p-4">
+                            {selectedChat.messages.map((message) => (
+                              <div
+                                key={message.id}
+                                className={`flex ${
+                                  message.role === "user" ? "justify-end" : "justify-start"
+                                }`}
+                              >
+                                <div
+                                  className={`max-w-[92%] rounded-2xl px-4 py-3 ${
+                                    message.role === "user"
+                                      ? "bg-neutral-800 text-white"
+                                      : "bg-neutral-100 text-neutral-800"
+                                  }`}
+                                >
+                                  <p className="m-0 whitespace-pre-wrap break-words text-sm leading-relaxed">
+                                    {message.content}
+                                  </p>
+                                  {message.sources.length > 0 && (
+                                    <div className="mt-3 border-t border-neutral-300/70 pt-2">
+                                      <span className="font-[var(--font-mono)] text-[9px] uppercase tracking-wider text-neutral-500">
+                                        Sources
+                                      </span>
+                                      <ul className="mb-0 mt-1 space-y-1 pl-4">
+                                        {message.sources.map((source) => (
+                                          <li key={source.url}>
+                                            <a
+                                              href={source.url}
+                                              target="_blank"
+                                              rel="noreferrer"
+                                              className="break-all text-xs text-amber-800 underline"
+                                            >
+                                              {source.title}
+                                            </a>
+                                          </li>
+                                        ))}
+                                      </ul>
+                                    </div>
+                                  )}
+                                  <time
+                                    className={`mt-2 block text-right text-[9px] ${
+                                      message.role === "user" ? "text-neutral-300" : "text-neutral-400"
+                                    }`}
+                                    dateTime={message.created_at}
+                                  >
+                                    {messageDate(message.created_at)}
+                                  </time>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </>
+                      ) : (
+                        <div className="grid flex-1 place-items-center p-8 text-center text-sm text-neutral-500">
+                          Choose a saved conversation to review its messages.
+                        </div>
+                      )}
+                    </article>
+                  </div>
+                )}
+                {chatTotal > chatPageSize && (
+                  <footer className="dashboard-pagination">
+                    <span>
+                      Page {Math.floor(chatOffset / chatPageSize) + 1} of{" "}
+                      {Math.ceil(chatTotal / chatPageSize)}
+                    </span>
+                    <div>
+                      <button
+                        type="button"
+                        onClick={() => void loadChats(Math.max(0, chatOffset - chatPageSize))}
+                        disabled={chatOffset === 0 || isLoadingChats}
+                      >
+                        <ChevronLeft size={17} /> Previous
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => void loadChats(chatOffset + chatPageSize)}
+                        disabled={chatOffset + chatPageSize >= chatTotal || isLoadingChats}
+                      >
+                        Next <ChevronRight size={17} />
+                      </button>
+                    </div>
+                  </footer>
+                )}
+              </div>
             )}
-            {chatTotal > chatPageSize && <footer className="dashboard-pagination"><span>Page {Math.floor(chatOffset / chatPageSize) + 1} of {Math.ceil(chatTotal / chatPageSize)}</span><div><button type="button" onClick={() => void loadChats(Math.max(0, chatOffset - chatPageSize))} disabled={chatOffset === 0 || isLoadingChats}><ChevronLeft size={17} /> Previous</button><button type="button" onClick={() => void loadChats(chatOffset + chatPageSize)} disabled={chatOffset + chatPageSize >= chatTotal || isLoadingChats}>Next <ChevronRight size={17} /></button></div></footer>}
           </section>
         ) : activeView === "messages" ? <section className="dashboard-inbox" aria-label="Contact messages">
           <div className="dashboard-inbox-toolbar">
             <label className="dashboard-search">
               <span className="sr-only">Search messages on this page</span>
-              <Search size={16} aria-hidden="true" />
+              <Search size={16} className="text-[#d75e2e]" aria-hidden="true" />
               <input type="search" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search name, subject, email…" />
               {search && <button type="button" className="dashboard-search-clear" onClick={() => setSearch("")} aria-label="Clear message search"><X size={14} /></button>}
             </label>
@@ -1242,6 +2034,151 @@ export default function DashboardClient() {
             )}
           </section>
         )}
+
+        {activeView === "profile" && (
+          <section className="space-y-4" aria-label="Admin profile management">
+            <div className="rounded-2xl border border-[#e4d8c7] bg-[#fffdfa] p-5 shadow-xs sm:p-6">
+              <div className="mb-5 flex items-center gap-3 border-b border-[#ece2d5] pb-4">
+                <span className="grid size-10 place-items-center rounded-xl border border-[#ebdcc9] bg-[#fbf5e9] text-[#d75e2e]">
+                  <UserRound size={20} />
+                </span>
+                <div>
+                  <h2 className="m-0 text-sm font-bold text-[#231d17]">Your profile</h2>
+                  <p className="m-0 text-xs text-[#786a57]">Manage your display name, email, phone, and profile photo.</p>
+                </div>
+              </div>
+              <form onSubmit={saveProfile} className="space-y-4">
+                <div className="flex items-center gap-4 rounded-xl border border-[#ebdcc9] bg-[#fbf5e9]/50 p-4">
+                  <span
+                    className="grid size-14 shrink-0 place-items-center overflow-hidden rounded-full border border-[#e2d5c3]"
+                    style={{ background: "linear-gradient(135deg, #f5ecdd, #fbf5e9)", color: "#a1552a" }}
+                  >
+                    {profileAvatarPreview ? (
+                      <ProjectImage
+                        src={profileAvatarPreview}
+                        alt="Profile preview"
+                        className="size-full object-cover"
+                        sizes="56px"
+                      />
+                    ) : (
+                      <UserRound size={24} aria-hidden="true" />
+                    )}
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <p className="m-0 text-xs font-semibold text-[#231d17]">Profile photo</p>
+                    <p className="m-0 text-[10px] text-[#786a57]">JPEG, PNG, or WebP up to 5 MB</p>
+                    <div className="mt-1.5 flex items-center gap-2">
+                      <label className="inline-flex cursor-pointer items-center gap-1.5 rounded-lg border border-[#e2d5c3] bg-white px-3 py-1.5 text-[11px] font-medium text-[#231d17] shadow-xs transition hover:bg-[#fbf5e9]">
+                        <ImagePlus size={13} className="text-[#d75e2e]" />
+                        <span>{profileAvatarFile ? "Change photo" : "Choose photo"}</span>
+                        <input
+                          ref={profileFileRef}
+                          type="file"
+                          accept="image/jpeg,image/png,image/webp"
+                          className="sr-only"
+                          onChange={(e) => chooseProfileAvatar(e.currentTarget.files?.[0])}
+                        />
+                      </label>
+                      {profileAvatarFile && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setProfileAvatarFile(null);
+                            setProfileAvatarPreview(null);
+                            if (profileFileRef.current) profileFileRef.current.value = "";
+                          }}
+                          className="text-[11px] text-red-600 hover:underline"
+                        >
+                          Remove
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="space-y-1">
+                    <label htmlFor="profile-name" className="flex items-center gap-1.5 text-xs font-semibold text-[#231d17]">
+                      <UserRound size={13} className="text-[#d75e2e]" />
+                      Full name
+                    </label>
+                    <input
+                      id="profile-name"
+                      value={profileName}
+                      onChange={(e) => setProfileName(e.target.value)}
+                      required
+                      minLength={2}
+                      maxLength={100}
+                      className="min-h-10 w-full rounded-xl border border-[#e2d5c3] bg-white px-3.5 text-xs text-[#231d17] shadow-xs outline-none transition placeholder:text-[#948471] hover:border-[#cfbfa9] focus:border-[#d75e2e] focus:ring-3 focus:ring-[#d75e2e]/10 sm:text-sm"
+                      placeholder="Your full name"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label htmlFor="profile-email" className="flex items-center gap-1.5 text-xs font-semibold text-[#231d17]">
+                      <Mail size={13} className="text-[#d75e2e]" />
+                      Email address
+                    </label>
+                    <input
+                      id="profile-email"
+                      value={profileEmail}
+                      onChange={(e) => setProfileEmail(e.target.value)}
+                      type="email"
+                      maxLength={254}
+                      className="min-h-10 w-full rounded-xl border border-[#e2d5c3] bg-white px-3.5 text-xs text-[#231d17] shadow-xs outline-none transition placeholder:text-[#948471] hover:border-[#cfbfa9] focus:border-[#d75e2e] focus:ring-3 focus:ring-[#d75e2e]/10 sm:text-sm"
+                      placeholder="you@example.com"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label htmlFor="profile-phone" className="flex items-center gap-1.5 text-xs font-semibold text-[#231d17]">
+                      <MessageSquare size={13} className="text-[#d75e2e]" />
+                      Phone number
+                    </label>
+                    <input
+                      id="profile-phone"
+                      value={profilePhone}
+                      onChange={(e) => setProfilePhone(e.target.value)}
+                      type="tel"
+                      maxLength={30}
+                      className="min-h-10 w-full rounded-xl border border-[#e2d5c3] bg-white px-3.5 text-xs text-[#231d17] shadow-xs outline-none transition placeholder:text-[#948471] hover:border-[#cfbfa9] focus:border-[#d75e2e] focus:ring-3 focus:ring-[#d75e2e]/10 sm:text-sm"
+                      placeholder="+212 …"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-end gap-3 border-t border-[#ece2d5] pt-4">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setProfileName("");
+                      setProfileEmail("");
+                      setProfilePhone("");
+                      setProfileAvatarFile(null);
+                      setProfileAvatarPreview(null);
+                      if (profileFileRef.current) profileFileRef.current.value = "";
+                    }}
+                    className="inline-flex min-h-10 items-center gap-2 rounded-xl border border-[#e2d5c3] bg-white px-4 text-xs font-semibold text-[#2b241b] shadow-xs transition hover:bg-[#fbf5e9]"
+                  >
+                    <X size={14} /> Clear
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isSavingProfile}
+                    className="inline-flex min-h-10 items-center gap-2 rounded-xl px-5 text-xs font-semibold text-[#faf5ee] shadow-sm transition-all duration-200 hover:brightness-110 disabled:opacity-60"
+                    style={{ background: "linear-gradient(135deg, #d75e2e, #c24f24)" }}
+                  >
+                    {isSavingProfile ? (
+                      <LoaderCircle size={15} className="animate-spin" />
+                    ) : (
+                      <Save size={15} />
+                    )}
+                    {isSavingProfile ? "Saving…" : "Save changes"}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </section>
+        )}
+
         <p className="dashboard-footnote">Private dashboard access is limited to your authenticated session. Sign out on shared devices.</p>
       </div>
     </main>

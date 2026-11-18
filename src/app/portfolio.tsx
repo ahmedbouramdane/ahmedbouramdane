@@ -4,25 +4,33 @@ import Image from "next/image";
 import Link from "next/link";
 import AiChatWidget from "./ai-chat-widget";
 import { useCallback, useEffect, useRef, useState, type FormEvent, type KeyboardEvent, type ReactNode } from "react";
-import { ArrowDown, ArrowDownRight, ArrowLeft, ArrowRight, ArrowUpRight, Award, BrainCircuit, ChartNoAxesColumn, Check, Code2, Copy, Database, ExternalLink, FileText, Gamepad2, GitBranch, Mail, Menu, MoveUpRight, ShieldCheck, Smartphone, Send, X, type LucideIcon } from "lucide-react";
+import { ArrowDown, ArrowDownRight, ArrowLeft, ArrowRight, ArrowUpRight, Award, BrainCircuit, Bug, ChartNoAxesColumn, Check, Code2, Copy, Database, ExternalLink, FileText, Fingerprint, FlaskConical, Gamepad2, GitBranch, Globe, Lock, Mail, Menu, MoveUpRight, Network, Radar, ScanSearch, Send, Shield, ShieldCheck, Smartphone, Sparkles, TestTube, Waves, X, type LucideIcon } from "lucide-react";
 import { FaGithub as Github, FaInstagram as Instagram, FaLinkedin as Linkedin, FaWhatsapp as WhatsApp } from "react-icons/fa6";
 import type { IconType } from "react-icons";
 import {
+  SiAndroidstudio,
   SiArduino,
   SiBlender,
   SiBootstrap,
+  SiC,
+  SiCplusplus,
   SiDart,
-  SiDocker,
   SiDjango,
+  SiDocker,
+  SiDotnet,
+  SiEspressif,
   SiExpress,
-  SiFirebase,
   SiFastapi,
+  SiFedora,
+  SiFirebase,
   SiFlask,
   SiFlutter,
   SiGit,
   SiGithub,
   SiGithubactions,
   SiGodotengine,
+  SiGoogleplay,
+  SiGsap,
   SiHuggingface,
   SiJavascript,
   SiKalilinux,
@@ -31,29 +39,37 @@ import {
   SiLangchain,
   SiLaravel,
   SiLinux,
+  SiMetasploit,
+  SiMicropython,
   SiMongodb,
   SiMysql,
   SiNextdotjs,
   SiNumpy,
-  SiOwasp,
+  SiOpenjdk,
   SiOpencv,
+  SiOwasp,
   SiPandas,
   SiPhp,
   SiPostgresql,
   SiPytorch,
   SiPython,
+  SiRaspberrypi,
   SiReact,
   SiScikitlearn,
   SiSqlite,
   SiTailwindcss,
   SiThreedotjs,
   SiTypescript,
-  SiAndroidstudio,
+  SiUbuntu,
+  SiUnity,
+  SiVirtualbox,
+  SiVmware,
 } from "react-icons/si";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { ScrollToPlugin } from "gsap/ScrollToPlugin";
 import ProjectImage from "./project-image";
+import { ProjectCard, isPortfolioProject, type PortfolioProject } from "./project-card";
 
 const links = [
   { label: "About", href: "#about" },
@@ -125,18 +141,6 @@ function isPortfolioCertificate(value: unknown): value is PortfolioCertificate {
     && "image" in value && typeof value.image === "string";
 }
 
-type PortfolioProject = {
-  id: number;
-  sort_order: number;
-  number: string;
-  title: string;
-  category: string;
-  description: string;
-  stack: string[];
-  repo: string;
-  image: string;
-};
-
 const projects: PortfolioProject[] = [
   {
     id: 1,
@@ -188,30 +192,6 @@ const projects: PortfolioProject[] = [
   },
 ];
 
-function isPortfolioProject(value: unknown): value is Omit<PortfolioProject, "number"> {
-  if (typeof value !== "object" || value === null) return false;
-  const project = value;
-  return "id" in project
-    && typeof project.id === "number"
-    && Number.isInteger(project.id)
-    && "sort_order" in project
-    && typeof project.sort_order === "number"
-    && Number.isInteger(project.sort_order)
-    && "title" in project
-    && typeof project.title === "string"
-    && "category" in project
-    && typeof project.category === "string"
-    && "description" in project
-    && typeof project.description === "string"
-    && "stack" in project
-    && Array.isArray(project.stack)
-    && project.stack.every((item) => typeof item === "string")
-    && "repo" in project
-    && typeof project.repo === "string"
-    && "image" in project
-    && typeof project.image === "string";
-}
-
 const skillPaths = [
   {
     number: "01",
@@ -244,6 +224,7 @@ const skillPaths = [
     groups: [
       { name: "App development", tools: ["Flutter", "Dart", "React Native"] },
       { name: "Platform & services", tools: ["Android Studio", "Firebase"] },
+      { name: "Testing & deployment", tools: ["Flutter Testing", "JUnit", "Firebase App Distribution", "Google Play Console", "Git & GitHub"] },
     ],
   },
   {
@@ -252,8 +233,10 @@ const skillPaths = [
     description: "Learning practical security principles and how to build safer software.",
     icon: ShieldCheck,
     groups: [
-      { name: "Security fundamentals", tools: ["OWASP Top 10", "Secure coding", "Threat modeling"] },
-      { name: "Platforms", tools: ["Linux", "Kali Linux"] },
+      { name: "Operating systems & platforms", tools: ["Linux", "Kali Linux", "Ubuntu", "Fedora", "VirtualBox", "VMware"] },
+      { name: "Network security", tools: ["TCP/IP", "DNS & HTTP/HTTPS", "Firewalls", "Nmap"] },
+      { name: "Ethical hacking & pentesting", tools: ["OWASP Top 10", "Penetration Testing", "Web Application Security", "SQL Injection", "Cross-Site Scripting (XSS)", "Metasploit"] },
+      { name: "Cryptography", tools: ["Encryption & Decryption", "Hashing"] },
     ],
   },
   {
@@ -263,8 +246,9 @@ const skillPaths = [
     icon: Gamepad2,
     groups: [
       { name: "3D & graphics", tools: ["Three.js", "Blender"] },
-      { name: "Game development", tools: ["Godot", "GDScript"] },
-      { name: "Physical computing", tools: ["Arduino"] },
+      { name: "Game development", tools: ["Godot", "GDScript", "Unity", "C#", "Pygame"] },
+      { name: "Animation & interaction", tools: ["GSAP", "Anime.js", "Framer Motion"] },
+      { name: "Physical computing", tools: ["Arduino", "ESP32", "Raspberry Pi", "MicroPython", "C / C++"] },
     ],
   },
   {
@@ -273,7 +257,11 @@ const skillPaths = [
     description: "Languages I use across application development, data projects, and interactive work.",
     icon: Code2,
     groups: [
-      { name: "Languages", tools: ["TypeScript", "JavaScript", "Python", "PHP", "Dart", "Kotlin", "GDScript"] },
+      { name: "Problem solving & algorithms", tools: ["C", "C++", "Python", "Java"] },
+      { name: "Web development", tools: ["JavaScript", "TypeScript", "PHP"] },
+      { name: "Mobile development", tools: ["Dart", "Kotlin"] },
+      { name: "Game development", tools: ["GDScript"] },
+      { name: "Data science & AI", tools: ["Python"] },
     ],
   },
 ];
@@ -321,6 +309,25 @@ const skillIcons: Record<string, IconType> = {
   Kubernetes: SiKubernetes,
   "GitHub Actions": SiGithubactions,
   Linux: SiLinux,
+  Ubuntu: SiUbuntu,
+  Fedora: SiFedora,
+  VirtualBox: SiVirtualbox,
+  VMware: SiVmware,
+  Metasploit: SiMetasploit,
+  Unity: SiUnity,
+  C: SiC,
+  "C++": SiCplusplus,
+  "C / C++": SiC,
+  "C#": SiDotnet,
+  Java: SiOpenjdk,
+  Pygame: SiPython,
+  GSAP: SiGsap,
+  ESP32: SiEspressif,
+  "Raspberry Pi": SiRaspberrypi,
+  MicroPython: SiMicropython,
+  "Google Play Console": SiGoogleplay,
+  "Firebase App Distribution": SiFirebase,
+  "Git & GitHub": SiGit,
 };
 
 const skillIconColors: Record<string, string> = {
@@ -366,6 +373,25 @@ const skillIconColors: Record<string, string> = {
   Kubernetes: "#4267b2",
   "GitHub Actions": "#4267b2",
   Linux: "#b68b11",
+  Ubuntu: "#dd4814",
+  Fedora: "#51a2da",
+  VirtualBox: "#2d6bb3",
+  VMware: "#607078",
+  Metasploit: "#d12d2d",
+  Unity: "#222222",
+  C: "#5c6b7a",
+  "C++": "#00599c",
+  "C / C++": "#5c6b7a",
+  "C#": "#512bd4",
+  Java: "#e76f00",
+  Pygame: "#3476a8",
+  GSAP: "#88ce02",
+  ESP32: "#c7000b",
+  "Raspberry Pi": "#c51a4a",
+  MicroPython: "#3a3a3a",
+  "Google Play Console": "#34a853",
+  "Firebase App Distribution": "#e5a528",
+  "Git & GitHub": "#d9583d",
 };
 
 const skillConceptIcons: Record<string, LucideIcon> = {
@@ -376,8 +402,20 @@ const skillConceptIcons: Record<string, LucideIcon> = {
   "LoRA / PEFT": BrainCircuit,
   GDScript: Code2,
   "CI / CD": GitBranch,
-  "Secure coding": Code2,
-  "Threat modeling": ShieldCheck,
+  "Flutter Testing": TestTube,
+  JUnit: FlaskConical,
+  "TCP/IP": Network,
+  "DNS & HTTP/HTTPS": Globe,
+  Firewalls: Shield,
+  Nmap: Radar,
+  "Penetration Testing": ScanSearch,
+  "Web Application Security": ShieldCheck,
+  "SQL Injection": Bug,
+  "Cross-Site Scripting (XSS)": Code2,
+  "Encryption & Decryption": Lock,
+  Hashing: Fingerprint,
+  "Anime.js": Sparkles,
+  "Framer Motion": Waves,
 };
 
 function Label({ children }: { children: ReactNode }) {
@@ -395,10 +433,55 @@ function TechnologyCarousel() {
     const track = trackRef.current;
     if (!wrapper || !viewport || !track) return;
 
+    const cards = Array.from(track.querySelectorAll<HTMLElement>(".technology-card"));
+    const updateFocus = () => {
+      if (cards.length === 0) return;
+      const viewportRect = viewport.getBoundingClientRect();
+      const viewportCenter = viewportRect.left + viewportRect.width / 2;
+      let nearestIndex = -1;
+      let nearestDistance = Infinity;
+      const metrics = cards.map((card, index) => {
+        const rect = card.getBoundingClientRect();
+        const cardCenter = rect.left + rect.width / 2;
+        const width = card.offsetWidth || rect.width || 1;
+        const distance = (cardCenter - viewportCenter) / width;
+        const absDistance = Math.abs(distance);
+        if (absDistance < nearestDistance) {
+          nearestDistance = absDistance;
+          nearestIndex = index;
+        }
+        return { card, absDistance };
+      });
+      metrics.forEach(({ card, absDistance }, index) => {
+        const clamped = Math.min(absDistance, 2);
+        const scale = Math.max(0.92, 1.03 - clamped * 0.075);
+        const opacity = Math.max(0.85, 1 - clamped * 0.105);
+        card.style.setProperty("--card-scale", scale.toFixed(3));
+        card.style.setProperty("--card-opacity", opacity.toFixed(3));
+        card.classList.toggle("is-center", index === nearestIndex && absDistance < 0.5);
+      });
+    };
+
+    const setupTrackPadding = () => {
+      if (cards.length === 0) return;
+      const firstCard = cards[0];
+      const pad = Math.max(0, (viewport.clientWidth - firstCard.offsetWidth) / 2);
+      track.style.paddingLeft = `${pad}px`;
+      track.style.paddingRight = `${pad}px`;
+    };
+
+    setupTrackPadding();
+    updateFocus();
+
     gsap.registerPlugin(ScrollTrigger);
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
       viewport.classList.add("technology-scroll-static");
-      return;
+      viewport.addEventListener("scroll", updateFocus, { passive: true });
+      window.addEventListener("resize", updateFocus);
+      return () => {
+        viewport.removeEventListener("scroll", updateFocus);
+        window.removeEventListener("resize", updateFocus);
+      };
     }
 
     const getDistance = () => Math.max(1, Math.round(track.scrollWidth - viewport.clientWidth));
@@ -419,13 +502,25 @@ function TechnologyCarousel() {
       invalidateOnRefresh: true,
       onUpdate: (self) => {
         wrapper.style.setProperty("--tech-progress", String(self.progress));
+        updateFocus();
       },
     });
 
-    const refreshTimer = window.setTimeout(() => ScrollTrigger.refresh(), 250);
+    const refreshTimer = window.setTimeout(() => {
+      setupTrackPadding();
+      ScrollTrigger.refresh();
+      updateFocus();
+    }, 250);
+    const handleResize = () => {
+      setupTrackPadding();
+      ScrollTrigger.refresh();
+      updateFocus();
+    };
+    window.addEventListener("resize", handleResize);
 
     return () => {
       window.clearTimeout(refreshTimer);
+      window.removeEventListener("resize", handleResize);
       trigger.kill();
       tween.kill();
     };
@@ -433,12 +528,21 @@ function TechnologyCarousel() {
 
   return (
     <div className="technology-scroll" ref={wrapperRef}>
-      <div
-        className="technology-scroll-viewport"
-        ref={viewportRef}
-        role="region"
-        aria-label="Technology paths"
-      >
+      <div className="mx-auto w-full max-w-[1280px] px-5 sm:px-8 lg:px-12 xl:px-16">
+        <div className="technology-scroll-heading">
+          <h2
+            id="expertise-heading"
+            className="m-0 font-[var(--font-display)] text-[clamp(2.1rem,4.6vw,3.6rem)] font-medium leading-[1.02] tracking-[-0.06em] text-[#30271d]"
+          >
+            Technologies I <span className="text-[#bd572b]">use.</span>
+          </h2>
+        </div>
+        <div
+          className="technology-scroll-viewport"
+          ref={viewportRef}
+          role="region"
+          aria-label="Technology paths"
+        >
         <div className="technology-scroll-track" ref={trackRef}>
           {skillPaths.map((path) => (
             <article
@@ -477,6 +581,7 @@ function TechnologyCarousel() {
         </div>
       </div>
       <div className="technology-scroll-progress" aria-hidden="true"><span /></div>
+    </div>
     </div>
   );
 }
@@ -666,26 +771,6 @@ function CertificateCarousel({ certificates: items }: { certificates: PortfolioC
     </div>
   );
 }
-function ProjectCard({ project }: { project: PortfolioProject }) {
-  return (
-    <article className="project-card reveal">
-      <div className="project-visual" aria-hidden="true">
-        <ProjectImage className="project-image" src={project.image} alt="" sizes="(max-width: 760px) 100vw, (max-width: 1100px) 50vw, 600px" />
-        <span className="project-image-overlay" />
-        <span className="visual-index">PROJECT / {project.number}</span>
-        <span className="visual-category">{project.category}</span>
-      </div>
-      <div className="project-info">
-        <div className="project-title-line"><span className="project-number">{project.number}</span><h3>{project.title}</h3></div>
-        <p>{project.description}</p>
-        <div className="project-stack">{project.stack.map((item) => <span key={item}>{item}</span>)}</div>
-        {project.repo && (
-          <a className="project-link" href={`https://github.com/ahmedbouramdane/${project.repo}`} target="_blank" rel="noreferrer" aria-label={`View ${project.title} on GitHub`}>View repository <MoveUpRight size={16} /></a>
-        )}
-      </div>
-    </article>
-  );
-}
 
 export default function Portfolio() {
   const root = useRef<HTMLElement>(null);
@@ -694,14 +779,12 @@ export default function Portfolio() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [activeSection, setActiveSection] = useState("home");
-  const [projectFilter, setProjectFilter] = useState("All");
   const [portfolioProjects, setPortfolioProjects] = useState(projects);
   const [portfolioCertificates, setPortfolioCertificates] = useState(certificates);
   const [isSendingMessage, setIsSendingMessage] = useState(false);
+  const [showAllCertificates, setShowAllCertificates] = useState(false);
   const [contactResult, setContactResult] = useState<{ type: "success" | "error"; message: string } | null>(null);
   const [emailCopied, setEmailCopied] = useState(false);
-  const categories = ["All", ...Array.from(new Set(portfolioProjects.map((project) => project.category)))];
-  const visibleProjects = portfolioProjects.filter((project) => projectFilter === "All" || project.category === projectFilter);
   const contactEmail = process.env.NEXT_PUBLIC_CONTACT_EMAIL?.trim() || "a.bouramdnae.se24@lydex-se.ma";
 
   useEffect(() => {
@@ -1069,7 +1152,8 @@ export default function Portfolio() {
         <a className="scroll-cue" href="#about"><span>Scroll to explore</span><ArrowDown size={14} /></a>
       </section>
 
-      <section className="about-section section-shell section-pad" id="about" aria-labelledby="about-heading">
+      <section className="about-section section-band section-band--a" id="about" aria-labelledby="about-heading">
+        <div className="section-shell section-pad">
         <div className="section-heading reveal">
           <Label>01 / PROFILE</Label>
           <span className="section-aside">2 BAC SCIENCES MATHÉMATIQUES</span>
@@ -1098,6 +1182,11 @@ export default function Portfolio() {
                 <span className="about-title-index">01<br /><i /> PROFILE</span>
               </div>
               <p className="about-lead">I’m Ahmed Bouramdane, a 2 BAC Sciences Mathématiques student at LYDEX de Rabat. I’ve been curious about coding since childhood, and I love exploring how software, mathematics, and AI can turn difficult questions into practical solutions.</p>
+              <ul className="about-meta" aria-label="Quick facts">
+                <li><span className="about-meta-dot" aria-hidden="true" />Rabat, Morocco</li>
+                <li>2 BAC Sciences Mathématiques</li>
+                <li><span className="about-status-dot" aria-hidden="true" />Open to opportunities</li>
+              </ul>
             </div>
             <div className="about-focus about-reveal-item">
               <div className="about-focus-heading">
@@ -1131,27 +1220,19 @@ export default function Portfolio() {
             </div>
           </div>
         </div>
-      </section>
-
-      <section
-        className="w-full border-y border-[#e4d8c5] bg-[#f4ead6] py-16 sm:py-20 lg:py-24"
-        id="expertise"
-        aria-labelledby="expertise-heading"
-      >
-        <div className="mx-auto w-full max-w-[1280px] px-5 sm:px-8 lg:px-12 xl:px-16">
-          <div className="reveal flex flex-col gap-4 pb-8 pt-2 sm:pb-10 lg:pb-12">
-            <h2
-              id="expertise-heading"
-              className="m-0 font-[var(--font-display)] text-[clamp(2.7rem,6vw,5.25rem)] font-medium leading-[1.02] tracking-[-0.065em] text-[#30271d]"
-            >
-              Technologies I <span className="text-[#bd572b]">use.</span>
-            </h2>
-          </div>
-          <TechnologyCarousel />
         </div>
       </section>
 
-      <section className="certificate-section section-shell section-pad" id="certificates" aria-labelledby="certificates-heading">
+      <section
+        className="w-full border-y border-[#e4d8c5] section-band section-band--b"
+        id="expertise"
+        aria-labelledby="expertise-heading"
+      >
+        <TechnologyCarousel />
+      </section>
+
+      <section className="certificate-section section-band section-band--a" id="certificates" aria-labelledby="certificates-heading">
+        <div className="section-shell section-pad">
         <div className="section-heading reveal">
           <Label>02 / Verified learning</Label>
           <span className="section-aside">VERIFIED CREDENTIALS</span>
@@ -1160,31 +1241,63 @@ export default function Portfolio() {
           <div>
             <h2 id="certificates-heading">Knowledge,<br /><span>put to the test.</span></h2>
           </div>
-          <p>Credentials earned through practical assessments and recognized learning programs.</p>
+          <button className="certificate-show-all" type="button" onClick={() => setShowAllCertificates((v) => !v)} aria-expanded={showAllCertificates}>
+            {showAllCertificates ? "Show carousel" : "Show all certificates"} <MoveUpRight size={14} />
+          </button>
         </div>
-        <CertificateCarousel certificates={portfolioCertificates} />
+        {showAllCertificates ? (
+          <div className="certificate-grid" aria-live="polite">
+            {portfolioCertificates.map((cert) => (
+              <article className="certificate-card certificate-card--grid" key={cert.id}>
+                <a className="certificate-preview" href={cert.image} target="_blank" rel="noreferrer" aria-label={`Open full ${cert.title} certificate`}>
+                  <ProjectImage src={cert.image} alt={`${cert.title} certificate awarded to Ahmed Bouramdane`} className="certificate-image" sizes="(max-width: 760px) 90vw, (max-width: 1100px) 45vw, 400px" />
+                  <span className="certificate-preview-action"><ExternalLink size={14} /> View original</span>
+                </a>
+                <div className="certificate-details">
+                  <div className="certificate-title-row">
+                    <span className="certificate-icon"><Award size={17} strokeWidth={1.7} /></span>
+                    {cert.verified_url ? (
+                      <a className="certificate-verify-link" href={cert.verified_url} target="_blank" rel="noopener noreferrer" aria-label={`Verify ${cert.title} on ${cert.issuer}`} title={`Verify on ${cert.issuer}`}>
+                        <ShieldCheck size={13} /> <span>Verify credential</span><ExternalLink size={11} />
+                      </a>
+                    ) : (
+                      <span className="certificate-issuer"><ShieldCheck size={13} /> {cert.issuer}</span>
+                    )}
+                  </div>
+                  <h3>{cert.title}</h3>
+                  <p>{cert.field}</p>
+                  <div className="certificate-meta">
+                    <span><small>ISSUED</small><strong>{cert.earned}</strong></span>
+                    <span><small>CREDENTIAL ID</small><strong>{cert.credential_id}</strong></span>
+                  </div>
+                </div>
+              </article>
+            ))}
+          </div>
+        ) : (
+          <CertificateCarousel certificates={portfolioCertificates} />
+        )}
         <p className="certificate-note reveal"><span>{String(portfolioCertificates.length).padStart(2, "0")}</span> credentials displayed <i /> Each image opens at full resolution.</p>
+        </div>
       </section>
 
-      <section className="projects-section section-shell section-pad" id="projects" aria-labelledby="projects-heading">
+      <section className="projects-section section-band section-band--b" id="projects" aria-labelledby="projects-heading">
+        <div className="section-shell section-pad">
         <div className="projects-intro reveal">
           <div><Label>03 / Selected work</Label><h2 id="projects-heading">Selected projects.</h2></div>
-          <p>Experiments and tools built to solve problems, learn deeply, and turn ideas into working software.</p>
-        </div>
-        <div className="project-filters" aria-label="Filter projects">
-          {categories.map((category) => (
-            <button type="button" key={category} className={projectFilter === category ? "selected" : ""} onClick={() => setProjectFilter(category)} aria-pressed={projectFilter === category}>{category}</button>
-          ))}
+          <Link className="projects-see-all" href="/projects">See all projects <ArrowUpRight size={16} /></Link>
         </div>
         <div className="project-grid" aria-live="polite">
-          {visibleProjects.map((project) => (
+          {portfolioProjects.slice(0, 6).map((project) => (
             <ProjectCard project={project} key={project.id} />
           ))}
         </div>
-        <p className="project-note reveal">{String(visibleProjects.length).padStart(2, "0")} projects shown <span>·</span> Filter by area to explore the work.</p>
+        <p className="project-note reveal">{String(Math.min(portfolioProjects.length, 6)).padStart(2, "0")} of {String(portfolioProjects.length).padStart(2, "0")} projects <span>·</span> <Link className="project-note-link" href="/projects">Browse the full collection <MoveUpRight size={12} /></Link></p>
+        </div>
       </section>
 
-      <section className="journey-section section-shell section-pad" id="journey" aria-labelledby="journey-heading">
+      <section className="journey-section section-band section-band--a" id="journey" aria-labelledby="journey-heading">
+        <div className="section-shell section-pad">
         <div className="section-heading reveal">
           <Label>04 / THE LEARNING JOURNEY</Label>
           <span className="section-aside">STUDIES &amp; PROJECTS</span>
@@ -1222,9 +1335,11 @@ export default function Portfolio() {
             </article>
           </div>
         </div>
+        </div>
       </section>
 
-      <section className="contact-section section-shell" id="contact" aria-labelledby="contact-heading">
+      <section className="contact-section section-band section-band--b" id="contact" aria-labelledby="contact-heading">
+        <div className="section-shell">
         <div className="contact-topline reveal"><Label>05 / Contact</Label><span className="section-aside">RABAT, MOROCCO</span></div>
         <div className="contact-layout">
           <div className="contact-content reveal">
@@ -1313,6 +1428,7 @@ export default function Portfolio() {
           </form>
         </div>
         <div className="contact-orbit" aria-hidden="true"><span /><span /><span /></div>
+        </div>
       </section>
 
       <footer className="site-footer section-shell">

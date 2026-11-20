@@ -399,6 +399,14 @@ export default AHMED_BOURAMDANE;
   <img src="https://user-images.githubusercontent.com/73097560/115834477-dbab4500-a447-11eb-908a-139a6edaec5c.gif" width="100%" alt="divider"/>
 </div>
 
+## 🔒 Private Study Organizer
+
+This repository also hosts a private study organizer for the 2 Bac Sciences Mathématiques year at `/student-management`. It is not linked from the portfolio, is excluded from search indexing, and runs on its own login, session cookie, and SQLite database (`backend/data/2bac-study.db`). It tracks every lesson and subtitle, captures questions for teachers, and surfaces what needs attention. See `backend/README.md` for setup.
+
+<div align="center">
+  <img src="https://user-images.githubusercontent.com/73097560/115834477-dbab4500-a447-11eb-908a-139a6edaec5c.gif" width="100%" alt="divider"/>
+</div>
+
 ## 🤝 Let's Connect
 
 Have an opportunity, project idea, or question? Choose a channel below — I'd be happy to hear from you.
